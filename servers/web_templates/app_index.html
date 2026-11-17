@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{{ application.name or 'SNAIZER//NET' }}</title>
+    <meta name="description" content="SNAIZER//NET: the cyberpunk terminal portfolio of Mohammed Tchichi (Sn4iZer)." />
+    <meta name="theme-color" content="#0a0a12" />
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='10' fill='%230a0a12'/%3E%3Cpath d='M44 14H22a8 8 0 0 0 0 16h20a8 8 0 0 1 0 16H18' fill='none' stroke='%2300f0ff' stroke-width='7' stroke-linecap='square'/%3E%3Cpath d='M50 10 40 54' stroke='%23ff2bd6' stroke-width='4'/%3E%3C/svg%3E"
+    />
+    <link rel="stylesheet" href="{{ config.static.url }}css/xterm.css" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto%20Mono" />
+    <script src="{{ config.static.url }}js/textual.js"></script>
+    <style>
+      html,
+      body {
+        margin: 0;
+        background: #0a0a12;
+      }
+
+      .dialog-container {
+        position: absolute;
+        width: 100vw;
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10;
+      }
+
+      .shade {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        background: repeating-linear-gradient(
+            0deg,
+            rgba(0, 240, 255, 0.04) 0px,
+            rgba(0, 240, 255, 0.04) 1px,
+            transparent 1px,
+            transparent 3px
+          ),
+          #0a0a12;
+      }
+
+      .intro {
+        position: relative;
+        width: 560px;
+        max-width: 90vw;
+        padding: 32px;
+        z-index: 20;
+        font-family: "Roboto Mono", menlo, monospace;
+        font-size: 16px;
+        text-align: center;
+        color: #d6e4ff;
+        background-color: #10101c;
+        border: 2px solid #00f0ff;
+        box-shadow: 0 0 24px rgba(0, 240, 255, 0.35), inset 0 0 24px rgba(255, 43, 214, 0.15);
+      }
+
+      .intro .logo {
+        color: #00f0ff;
+        font-weight: bold;
+        letter-spacing: 4px;
+        text-shadow: 2px 0 #ff2bd6, -2px 0 #00f0ff;
+      }
+
+      .intro .sub {
+        margin-top: 12px;
+        color: #6b7a99;
+        font-size: 13px;
+      }
+
+      body.-first-byte .intro-dialog,
+      body.-first-byte .intro-dialog .shade {
+        opacity: 0;
+        transition: opacity 0.3s ease-out;
+        display: none;
+      }
+
+      body .textual-terminal {
+        opacity: 0;
+        transition: opacity 0.3s ease-out;
+      }
+
+      body.-first-byte .textual-terminal {
+        opacity: 1;
+      }
+
+      button {
+        padding: 12px 28px;
+        margin: 20px auto 0;
+        display: block;
+        font-family: "Roboto Mono", menlo, monospace;
+        font-weight: bold;
+        color: #0a0a12;
+        background-color: #00f0ff;
+        border: none;
+        cursor: pointer;
+      }
+
+      button:hover {
+        background: #ff2bd6;
+      }
+
+      .closed-dialog {
+        opacity: 0;
+        display: none;
+      }
+
+      body.-closed .closed-dialog {
+        opacity: 1;
+        display: flex;
+      }
+
+      #start {
+        display: none;
+      }
+
+      #start.-delay {
+        display: block;
+      }
+    </style>
+    <script>
+      function getStartUrl() {
+        const url = new URL(window.location.href);
+        const params = new URLSearchParams(url.search);
+        params.delete("delay");
+        return url.pathname + "?" + params.toString();
+      }
+      async function refresh() {
+        const pingUrl = document.body.dataset.pingurl;
+        if (pingUrl) {
+          await fetch(pingUrl, { method: "GET", mode: "no-cors" });
+        }
+        window.location.href = getStartUrl();
+      }
+    </script>
+  </head>
+  <body data-pingurl="{{ ping_url }}">
+    <div class="dialog-container intro-dialog">
+      <div class="shade"></div>
+      <div class="intro">
+        <div class="logo">SNAIZER//NET</div>
+        <div class="sub">establishing neural link&hellip;</div>
+        <button type="button" onClick="refresh()" id="start">JACK IN</button>
+      </div>
+    </div>
+
+    <div class="dialog-container closed-dialog">
+      <div class="shade"></div>
+      <div class="intro">
+        <div class="logo">LINK CLOSED</div>
+        <div class="sub">stay frosty, runner.</div>
+        <button type="button" onClick="refresh()">RECONNECT</button>
+      </div>
+    </div>
+
+    <div
+      id="terminal"
+      class="textual-terminal"
+      data-session-websocket-url="{{ app_websocket_url }}"
+      data-font-size="{{ font_size }}"
+    ></div>
+  </body>
+</html>

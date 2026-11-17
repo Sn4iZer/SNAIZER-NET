@@ -1,0 +1,163 @@
+# ---------------------------------------------------------------------------
+# SNAIZER//NET :: profile.yaml
+# The ONLY source of real portfolio data. Widgets never hardcode any of this.
+# Edit freely; the app validates the file at startup and tells you exactly
+# which field is wrong if something is off.
+# Fictional flavor text (boot logs, lore, shell jokes) lives in lore.yaml.
+# ---------------------------------------------------------------------------
+
+identity:
+  name: Mohammed Tchichi
+  handle: Sn4iZer
+  title: AI & Data Engineering Student
+  location: Tiflet, Morocco
+  bio: >-
+    AI & Data Engineering student at Ibn Tofail University, Kenitra.
+    I build machine-learning pipelines, ML-based intrusion detection and
+    data-driven security tooling, and I train on TryHackMe and HackTheBox.
+    1st place at the INJAZ Innovation Camp 2026 and 3rd place at
+    Let's Challenge 2025. Before that, I bootstrapped a print-on-demand
+    e-commerce business from MAD 2,000 to MAD 35,000 in revenue.
+
+contact:
+  email: mohammedtchichi03@gmail.com
+  github: Sn4iZer
+  location: Tiflet, Morocco
+
+# Extra headline numbers for the PROFILE screen.
+# AWARDS and PROJECTS are counted automatically from the lists below.
+highlights:
+  - label: PLATFORM REACH
+    value: "50,000+"
+  - label: IDS ACCURACY
+    value: "98%"
+
+education:
+  - degree: B.Sc. Artificial Intelligence & Data Engineering
+    institution: Ibn Tofail University
+    location: Kenitra
+    period: 2025-2026
+  - degree: DEUG Applied Computer Science
+    institution: Ibn Tofail University
+    location: Kenitra
+    period: 2023-2025
+
+# Levels are a stylized visual ("relative proficiency"), not a certification.
+skills:
+  - category: Languages
+    items:
+      - { name: Python (OOP), level: 90 }
+      - { name: SQL, level: 75 }
+      - { name: C, level: 70 }
+      - { name: C++, level: 65 }
+  - category: Data / ML
+    items:
+      - { name: pandas, level: 85 }
+      - { name: NumPy, level: 85 }
+      - { name: scikit-learn, level: 80 }
+      - { name: Matplotlib, level: 80 }
+      - { name: Seaborn, level: 75 }
+      - { name: Streamlit, level: 80 }
+  - category: Security
+    items:
+      - { name: Network analysis, level: 75 }
+      - { name: ML-based IDS, level: 80 }
+      - { name: CTF (TryHackMe / HackTheBox), level: 70 }
+  - category: Tools
+    items:
+      - { name: Git, level: 80 }
+      - { name: Linux, level: 80 }
+      - { name: TCP/IP, level: 75 }
+      - { name: API integration, level: 80 }
+      - { name: n8n, level: 65 }
+      - { name: Web scraping, level: 75 }
+
+# "level" is shown verbatim (as on the CV); "bar" only drives the visual.
+languages:
+  - { name: Arabic, level: Native, bar: 100 }
+  - { name: English, level: C1, bar: 85 }
+  - { name: French, level: B1, bar: 60 }
+
+projects:
+  - slug: pentest-framework
+    title: Data-Driven Pentesting Framework
+    kind: Final semester project
+    year: 2026
+    summary: >-
+      Simulated enterprise network with rule-based pentest phases, ML-driven
+      activity classification and an interactive remediation dashboard.
+    bullets:
+      - "Simulated enterprise network (Kali, Ubuntu, services) with rule-based pentest phases: recon, scanning, exploitation."
+      - ML classifiers trained on CICIDS2017 / UNSW-NB15 to categorize network activity and score machine-level risk.
+      - Interactive dashboard (Streamlit/Dash) for vulnerability prioritization and AI-driven remediation recommendations.
+    tags: [Python, Machine Learning, Pentesting, CICIDS2017, UNSW-NB15, Streamlit, Dash, Kali Linux]
+
+  - slug: airbnb-nyc
+    title: Airbnb NYC Price Prediction Platform
+    kind: Data science project
+    year: 2026
+    summary: >-
+      End-to-end data science pipeline predicting Airbnb prices in New York
+      City, shipped as a Streamlit prediction app.
+    bullets:
+      - "End-to-end pipeline: EDA, preprocessing and feature engineering (geospatial distance, property age, log-price)."
+      - Compared Linear Regression, Ridge and Random Forest models.
+      - Deployed a Streamlit prediction app.
+    tags: [Python, pandas, NumPy, scikit-learn, Matplotlib, Streamlit]
+
+  - slug: nids
+    title: Network Intrusion Detection System
+    kind: ML project
+    year: 2025
+    summary: >-
+      Machine-learning classifiers that detect anomalies in network traffic.
+    bullets:
+      - Classification models trained on the NSL-KDD dataset.
+      - 98% accuracy detecting network anomalies.
+    tags: [Python, scikit-learn, NSL-KDD, Security, Machine Learning]
+
+  - slug: spaceuit
+    title: SpaceUIT Educational Platform
+    kind: Contributor
+    year: 2025
+    summary: >-
+      Educational platform with LLM-powered features and a gamified quiz
+      module, reaching 50,000+ visitors.
+    bullets:
+      - Integrated ChatGPT-4o-mini and Gemini 2.0 Flash via REST API.
+      - Built a gamified quiz module.
+      - The platform has 50,000+ visitors.
+    tags: [REST API, LLM, ChatGPT-4o-mini, Gemini 2.0 Flash, Gamification]
+
+  - slug: currency-converter
+    title: Currency Converter Desktop App
+    kind: Desktop app
+    year: 2025
+    summary: >-
+      Python / CustomTkinter desktop app converting between 160+ currencies.
+    bullets:
+      - REST API integration with 1-hour local caching.
+      - Supports 160+ currencies.
+      - Light/dark UI.
+      - Threading for a responsive UX.
+    tags: [Python, CustomTkinter, REST API, Threading]
+
+awards:
+  - place: 1st Place
+    title: Innovation Camp
+    organizer: INJAZ / Crédit Agricole du Maroc
+    year: 2026
+    description: "AgriVoice AI: ML platform for financing project evaluation."
+  - place: 3rd Place
+    title: Let's Challenge 10th Edition
+    organizer: ENSA Kenitra
+    year: 2025
+    description: Gamified tourism app with an AI trip planner.
+
+experience:
+  - title: E-commerce Founder
+    organization: Print-on-Demand Decorative Art
+    period: 2023-2024
+    bullets:
+      - Grew from MAD 2,000 capital to MAD 35,000 revenue (700+ orders) in 7 months.
+      - Managed payments, ads and logistics end-to-end.

@@ -1,0 +1,30 @@
+# Runtime dependencies, fully pinned (direct deps mirror pyproject.toml).
+# Install: pip install -r requirements.txt
+textual==8.2.8
+textual-serve==1.1.3
+asyncssh==2.24.1
+PyYAML==6.0.3
+# transitive
+aiohappyeyeballs==2.7.1
+aiohttp==3.14.5
+aiohttp-jinja2==1.6
+aiosignal==1.4.0
+attrs==26.1.0
+cffi==2.1.1
+cryptography==50.0.2
+frozenlist==1.8.0
+idna==3.20
+Jinja2==3.1.6
+linkify-it-py==2.2.0
+markdown-it-py==4.3.0
+MarkupSafe==3.0.4
+mdit-py-plugins==0.7.0
+mdurl==0.1.2
+multidict==7.2.1
+platformdirs==4.14.5
+propcache==0.5.4
+pycparser==3.12
+Pygments==2.21.0
+rich==15.0.0
+typing_extensions==4.16.0
+yarl==1.25.1

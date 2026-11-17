@@ -1,0 +1,22 @@
+# Caddy terminates TLS (automatic Let's Encrypt certificates) and proxies
+# HTTP + WebSocket traffic to the textual-serve container.
+# With DOMAIN=localhost, Caddy issues a locally-trusted certificate instead.
+
+{$DOMAIN:localhost} {
+	encode zstd gzip
+
+	# reverse_proxy upgrades WebSocket connections (/ws) automatically and
+	# sets X-Forwarded-Proto / X-Forwarded-Host, which web.py uses to build
+	# wss:// URLs when PUBLIC_URL is not set.
+	reverse_proxy web:8000 {
+		flush_interval -1
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+}

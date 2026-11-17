@@ -1,0 +1,67 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "snaizer-net"
+version = "1.0.0"
+description = "SNAIZER//NET: a cyberpunk terminal portfolio served locally, on the web and over SSH."
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [{ name = "Mohammed Tchichi", email = "mohammedtchichi03@gmail.com" }]
+dependencies = [
+    "textual==8.2.8",
+    "textual-serve==1.1.3",
+    "asyncssh==2.24.1",
+    "PyYAML==6.0.3",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest==9.2.0",
+    "pytest-asyncio==1.5.0",
+    "ruff==0.17.5",
+    "black==26.10.1",
+]
+
+[project.scripts]
+snaizer-net = "snaizer_net.__main__:main"
+
+[tool.setuptools.packages.find]
+include = ["snaizer_net*"]
+
+[tool.setuptools.package-data]
+snaizer_net = ["*.tcss"]
+
+[tool.black]
+line-length = 100
+target-version = ["py311"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+extend-exclude = [".venv"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "SIM", "RUF", "D"]
+ignore = [
+    "D105", # magic methods
+    "D107", # __init__ docstrings (documented on the class)
+    "D203", # conflicts with D211
+    "D213", # conflicts with D212
+    "D401", # descriptive docstrings ("True if ...") read better for properties/handlers
+    "RUF012", # Textual's BINDINGS / CSS class attributes are idiomatic lists
+    "RUF001", # box-drawing / block glyphs are intentional
+    "RUF003",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["D"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["snaizer_net", "servers"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests"]

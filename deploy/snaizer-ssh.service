@@ -1,0 +1,34 @@
+# SSH gateway unit (see snaizer.service for install steps).
+[Unit]
+Description=SNAIZER//NET SSH gateway
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=snaizer
+Group=snaizer
+WorkingDirectory=/opt/snaizer-net
+Environment=SSH_PORT=2222
+Environment=SSH_HOST_KEY=/opt/snaizer-net/data/ssh_host_key
+ExecStart=/opt/snaizer-net/.venv/bin/python servers/ssh_server.py
+Restart=on-failure
+RestartSec=3
+
+# Hardening (PTYs need /dev/pts, so PrivateDevices stays off)
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=/opt/snaizer-net/data
+ProtectHome=true
+PrivateTmp=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+CapabilityBoundingSet=
+TasksMax=1024
+MemoryMax=2G
+
+[Install]
+WantedBy=multi-user.target

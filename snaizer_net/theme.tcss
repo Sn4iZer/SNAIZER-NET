@@ -1,0 +1,464 @@
+/* SNAIZER//NET theme.
+ * Colors come only from $neon-* variables (see themes.py), so swapping the
+ * Textual theme swaps the whole palette live.
+ */
+
+* {
+    scrollbar-color: $neon-magenta;
+    scrollbar-color-hover: $neon-cyan;
+    scrollbar-color-active: $neon-yellow;
+    scrollbar-background: $neon-panel;
+    scrollbar-background-hover: $neon-panel;
+    scrollbar-background-active: $neon-panel;
+    scrollbar-size-vertical: 1;
+}
+
+Screen {
+    background: $neon-bg;
+    color: $neon-text;
+}
+
+/* ---------------------------------------------------------------- boot -- */
+
+#boot-wrap {
+    padding: 1 2;
+}
+
+#boot-logo {
+    margin-bottom: 1;
+}
+
+#boot-log {
+    height: 1fr;
+}
+
+#boot-progress,
+#boot-hint {
+    height: 1;
+}
+
+/* --------------------------------------------------------------- login -- */
+
+LoginScreen {
+    align: center middle;
+}
+
+#login-wrap {
+    width: 76;
+    height: auto;
+    align-horizontal: center;
+}
+
+#login-title {
+    width: auto;
+    margin: 1 0;
+}
+
+#login-box {
+    width: 60;
+    height: auto;
+    padding: 0 2;
+    background: $neon-panel;
+    border: heavy $neon-cyan;
+}
+
+#login-box.-denied {
+    border: heavy $neon-danger;
+    background: $neon-danger 10%;
+}
+
+#login-box.-granted {
+    border: heavy $neon-green;
+}
+
+.login-label {
+    margin-top: 1;
+}
+
+#login-status {
+    height: auto;
+    min-height: 1;
+    margin-top: 1;
+}
+
+#login-help {
+    height: 1;
+}
+
+Input {
+    background: $neon-bg;
+    color: $neon-text;
+    border: tall $neon-dim;
+}
+
+Input:focus {
+    border: tall $neon-magenta;
+}
+
+Input > .input--placeholder {
+    color: $neon-dim;
+}
+
+Input > .input--cursor {
+    background: $neon-magenta;
+    color: $neon-bg;
+}
+
+#decrypt {
+    margin-top: 1;
+}
+
+#granted {
+    margin-top: 1;
+}
+
+/* ---------------------------------------------------------------- main -- */
+
+#status {
+    dock: top;
+    padding: 0 1;
+    background: $neon-panel;
+}
+
+#key-hints {
+    dock: bottom;
+    padding: 0 1;
+    background: $neon-panel;
+}
+
+#tabstrip {
+    display: none;
+    height: 1;
+    background: $neon-bg;
+}
+
+MainScreen.-narrow #tabstrip {
+    display: block;
+}
+
+MainScreen.-narrow #sidebar {
+    display: none;
+}
+
+#body {
+    height: 1fr;
+}
+
+#sidebar {
+    width: 24;
+    background: $neon-panel;
+    border: double $neon-magenta;
+}
+
+.nav-header {
+    padding: 0 1;
+    margin-bottom: 1;
+    color: $neon-magenta;
+    text-style: bold;
+}
+
+.nav-item {
+    padding: 0 1;
+    color: $neon-dim;
+}
+
+#tabstrip .nav-item {
+    width: auto;
+}
+
+.nav-item:hover {
+    color: $neon-text;
+    background: $neon-bg;
+}
+
+.nav-item.-admin {
+    color: $neon-yellow;
+}
+
+.nav-item.-active {
+    color: $neon-bg;
+    background: $neon-cyan;
+    text-style: bold;
+}
+
+.nav-spacer {
+    height: 1fr;
+}
+
+.nav-footer {
+    padding: 0 1;
+    color: $neon-dim;
+}
+
+#pane {
+    width: 1fr;
+    padding: 0 1;
+    background: $neon-panel;
+    border: double $neon-cyan;
+}
+
+#section-title {
+    margin-bottom: 1;
+}
+
+#switcher {
+    height: 1fr;
+}
+
+.section {
+    height: 1fr;
+}
+
+.caption {
+    margin-bottom: 1;
+    color: $neon-dim;
+}
+
+.card {
+    height: auto;
+    margin-bottom: 1;
+    padding: 0 1;
+    background: $neon-bg;
+    border: round $neon-cyan;
+    border-title-color: $neon-yellow;
+    border-title-style: bold;
+}
+
+.panel {
+    height: auto;
+    margin-bottom: 1;
+    padding: 0 1;
+    background: $neon-bg;
+    border: heavy $neon-magenta;
+    border-title-color: $neon-cyan;
+    border-title-style: bold;
+}
+
+/* profile */
+
+#profile-top {
+    height: auto;
+}
+
+.avatar {
+    width: 20;
+    margin-right: 2;
+    color: $neon-magenta;
+}
+
+MainScreen.-narrow .avatar {
+    display: none;
+}
+
+#profile-ident {
+    width: 1fr;
+    height: auto;
+}
+
+.profile-title {
+    margin-bottom: 1;
+}
+
+#profile-stats {
+    height: auto;
+    margin-top: 1;
+}
+
+.stat-box {
+    width: 1fr;
+    height: auto;
+    padding: 0 1;
+    text-align: center;
+    background: $neon-bg;
+    border: round $neon-magenta;
+}
+
+/* projects */
+
+#project-list {
+    width: 40%;
+    height: 1fr;
+    background: $neon-bg;
+    border: heavy $neon-magenta;
+    border-title-color: $neon-cyan;
+    border-title-style: bold;
+}
+
+#project-list:focus {
+    border: heavy $neon-cyan;
+}
+
+#project-list > ListItem {
+    background: $neon-bg;
+    color: $neon-text;
+}
+
+#project-list > ListItem Label {
+    padding: 0 1;
+}
+
+#project-list > ListItem.-highlight {
+    background: $neon-magenta 35%;
+}
+
+#project-list:focus > ListItem.-highlight {
+    background: $neon-cyan 35%;
+    text-style: bold;
+}
+
+#dossier-scroll {
+    width: 1fr;
+    height: 1fr;
+}
+
+#dossier {
+    height: auto;
+    padding: 0 1;
+    background: $neon-bg;
+    border: double $neon-danger;
+    border-title-color: $neon-danger;
+    border-title-style: bold;
+}
+
+MainScreen.-narrow ProjectsSection {
+    layout: vertical;
+}
+
+MainScreen.-narrow #project-list {
+    width: 1fr;
+    height: 7;
+}
+
+/* awards */
+
+#awards-row {
+    height: auto;
+}
+
+.trophy {
+    width: 15;
+    margin-right: 2;
+    color: $neon-yellow;
+}
+
+MainScreen.-narrow .trophy {
+    display: none;
+}
+
+#awards-cards {
+    width: 1fr;
+    height: auto;
+}
+
+/* contact */
+
+#contact-actions {
+    layout: grid;
+    grid-size: 2;
+    grid-gutter: 0 1;
+    height: auto;
+}
+
+.neon-button {
+    width: 1fr;
+    color: $neon-cyan;
+    background: $neon-bg;
+    border: tall $neon-cyan;
+    text-style: bold;
+}
+
+.neon-button:hover,
+.neon-button:focus {
+    color: $neon-bg;
+    background: $neon-cyan;
+}
+
+/* terminal */
+
+TerminalSection {
+    height: 1fr;
+}
+
+#fake-shell {
+    height: 1fr;
+    padding: 0 1;
+    background: $neon-bg;
+    border: round $neon-green;
+}
+
+#shell-scroll {
+    height: 1fr;
+}
+
+#shell-prompt-row {
+    height: 1;
+}
+
+#shell-prompt {
+    width: auto;
+}
+
+#shell-input,
+#shell-input:focus {
+    width: 1fr;
+    height: 1;
+    padding: 0;
+    border: none;
+    background: $neon-bg;
+}
+
+/* black-ice */
+
+.skull {
+    width: auto;
+    color: $neon-danger;
+}
+
+.blackice-title {
+    margin: 1 0;
+}
+
+/* ------------------------------------------------------------ overlays -- */
+
+HelpScreen {
+    align: center middle;
+    background: $neon-bg 70%;
+}
+
+#help-box {
+    width: auto;
+    max-width: 78;
+    height: auto;
+    padding: 1 2;
+    background: $neon-panel;
+    border: double $neon-magenta;
+}
+
+#help-box Static {
+    width: auto;
+}
+
+MatrixScreen {
+    background: $neon-bg;
+}
+
+#rain-caption {
+    dock: bottom;
+    height: 1;
+}
+
+#rain-caption Static {
+    width: auto;
+}
+
+TooSmallScreen {
+    align: center middle;
+    background: $neon-bg;
+}
+
+#too-small {
+    width: auto;
+    padding: 1 2;
+    text-align: center;
+    border: heavy $neon-danger;
+}

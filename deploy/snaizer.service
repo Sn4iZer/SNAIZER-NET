@@ -1,0 +1,40 @@
+# Optional systemd units for running without Docker.
+# Install the app in /opt/snaizer-net (see README), then:
+#   sudo cp deploy/snaizer.service /etc/systemd/system/snaizer-web.service
+#   sudo cp deploy/snaizer-ssh.service /etc/systemd/system/snaizer-ssh.service
+#   sudo systemctl daemon-reload && sudo systemctl enable --now snaizer-web snaizer-ssh
+# Put Caddy (apt install caddy) in front of 127.0.0.1:8000 for HTTPS.
+
+[Unit]
+Description=SNAIZER//NET web (textual-serve)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=snaizer
+Group=snaizer
+WorkingDirectory=/opt/snaizer-net
+Environment=HOST=127.0.0.1
+Environment=PORT=8000
+ExecStart=/opt/snaizer-net/.venv/bin/python servers/web.py
+Restart=on-failure
+RestartSec=3
+
+# Hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+CapabilityBoundingSet=
+TasksMax=512
+MemoryMax=1G
+
+[Install]
+WantedBy=multi-user.target

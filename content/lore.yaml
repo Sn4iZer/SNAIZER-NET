@@ -1,0 +1,54 @@
+# ---------------------------------------------------------------------------
+# SNAIZER//NET :: lore.yaml
+# 100% FICTIONAL flavor text: boot logs, shell jokes, the BLACK-ICE file.
+# Nothing in here is a real fact about anyone. Real data lives in profile.yaml.
+# ---------------------------------------------------------------------------
+
+node:
+  hostname: snaizer-net
+  kernel: SNAIZER//NET kernel v2.6
+  shell: nsh 0.9 (neural shell)
+
+boot_lines:
+  - { status: OK, text: "Initializing neural link..." }
+  - { status: OK, text: "Calibrating synaptic buffers" }
+  - { status: OK, text: "Mounting /dev/portfolio" }
+  - { status: OK, text: "Loading SNAIZER//NET kernel v2.6" }
+  - { status: OK, text: "Decrypting /etc/runner.d" }
+  - { status: WARN, text: "ICE signature detected on port 2222 ... bypassed" }
+  - { status: OK, text: "Spawning holo-display driver" }
+  - { status: OK, text: "Linking chrome subsystems" }
+  - { status: OK, text: "Syncing with orbital time relay" }
+  - { status: OK, text: "Indexing mission dossiers" }
+  - { status: OK, text: "Loading skill matrices" }
+  - { status: OK, text: "Sweeping for trace programs ... none found" }
+  - { status: OK, text: "Handing control to auth daemon" }
+
+login:
+  hint: "hint: any credentials work, runner."
+  denied_empty: "ACCESS DENIED: biometric mismatch"
+  trace_abort: "...trace aborted. Relax, runner: it's a portfolio. Try again."
+
+shell:
+  unknown:
+    - "nsh: '{cmd}': command not found in this sector of the net. Try 'help'."
+    - "nsh: '{cmd}'? My ICE has never heard of it. Try 'help', choom."
+    - "nsh: '{cmd}' flatlined on arrival. Type 'help' for working programs."
+    - "nsh: '{cmd}': no such daemon. The grid shrugs. Try 'help'."
+  forbidden:
+    - "ACCESS VIOLATION: '{cmd}' is blocked by BLACK-ICE. Nothing was executed."
+    - "nsh: '{cmd}'? Nice try, runner. This deck is a sandbox; nothing ran."
+  motd: "Welcome to SNAIZER//NET. This is a simulated node: no real system is behind this prompt."
+
+blackice:
+  title: "FILE 0x09 // BLACK-ICE // SYSOP EYES ONLY"
+  body:
+    - "// FICTION // This partition is pure lore. Nothing here is real."
+    - ""
+    - "LOG 2077.04.01 :: Somebody keeps knocking on port 2222 with the password 1234."
+    - "LOG 2077.04.02 :: The trace program is still just a countdown. Do not tell them."
+    - "LOG 2077.04.03 :: Rumor says the matrix rain is real if you press 'm' long enough."
+    - "LOG 2077.04.04 :: Coffee reserves at 12%. Raising threat level to YELLOW."
+    - ""
+    - "SYSOP NOTE :: If you are reading this, you typed 'snaizer' or 'admin' at the gate."
+    - "              Congratulations. The real treasure was the dossiers you read along the way."
