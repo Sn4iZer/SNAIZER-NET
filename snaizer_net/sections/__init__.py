@@ -10,6 +10,7 @@ from snaizer_net.sections.panes import (
     ProjectsSection,
     SkillsSection,
     TerminalSection,
+    TimelineSection,
 )
 
 __all__ = [
@@ -22,4 +23,5 @@ __all__ = [
     "ProjectsSection",
     "SkillsSection",
     "TerminalSection",
+    "TimelineSection",
 ]

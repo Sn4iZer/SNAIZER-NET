@@ -9,15 +9,16 @@
 identity:
   name: Mohammed Tchichi
   handle: Sn4iZer
-  title: AI & Data Engineering Student
+  title: Master's Student, AI & IoT (1st year)
   location: Tiflet, Morocco
   bio: >-
-    AI & Data Engineering student at Ibn Tofail University, Kenitra.
+    1st-year Master's student in Artificial Intelligence & IoT at Ibn Tofail
+    University, Kenitra, after a B.Sc. in AI & Data Engineering.
     I build machine-learning pipelines, ML-based intrusion detection and
     data-driven security tooling, and I train on TryHackMe and HackTheBox.
     1st place at the INJAZ Innovation Camp 2026 and 3rd place at
-    Let's Challenge 2025. Before that, I bootstrapped a print-on-demand
-    e-commerce business from MAD 2,000 to MAD 35,000 in revenue.
+    Let's Challenge 2025. I also bootstrapped a print-on-demand e-commerce
+    business from MAD 2,000 to MAD 35,000 in revenue.
 
 contact:
   email: mohammedtchichi03@gmail.com
@@ -33,6 +34,10 @@ highlights:
     value: "98%"
 
 education:
+  - degree: Master's in Artificial Intelligence & IoT (1st year)
+    institution: Ibn Tofail University
+    location: Kenitra
+    period: 2026-2028
   - degree: B.Sc. Artificial Intelligence & Data Engineering
     institution: Ibn Tofail University
     location: Kenitra
@@ -154,7 +159,14 @@ awards:
     year: 2025
     description: Gamified tourism app with an AI trip planner.
 
+# period accepts: 2023 | 2023-2025 | 2023-present | Jun 2026 - Jul 2026
 experience:
+  - title: Sport Leader
+    organization: Decathlon Kenitra
+    period: Jun 2026 - Jul 2026
+    bullets:
+      - Advised customers on sports products and equipment.
+      - Handled sales and checkout operations.
   - title: E-commerce Founder
     organization: Print-on-Demand Decorative Art
     period: 2023-2024

@@ -39,6 +39,26 @@ shell:
     - "ACCESS VIOLATION: '{cmd}' is blocked by BLACK-ICE. Nothing was executed."
     - "nsh: '{cmd}'? Nice try, runner. This deck is a sandbox; nothing ran."
   motd: "Welcome to SNAIZER//NET. This is a simulated node: no real system is behind this prompt."
+  sudo: "{user} is not in the sudoers file. This incident will be reported... to nobody. It's a portfolio."
+  fortunes:
+    - "The net is vast. Your attention span is not. Read the dossiers first."
+    - "Every firewall is just a wall that hasn't met a curious enough runner."
+    - "Data is the new chrome. Models are the new implants."
+    - "Overfit in training, underfit in production. Such is the way of the runner."
+    - "The sensor never lies. The firmware might."
+    - "Patch early, patch often, and never trust a default password."
+    - "In the neon rain, a well-tuned random forest is worth a thousand guesses."
+  hack:
+    - "[*] target acquired: mainframe.example (fictional)"
+    - "[*] bypassing ICE layer 1 ........ OK"
+    - "[*] bypassing ICE layer 2 ........ OK"
+    - "[*] injecting neural payload ..... 37%"
+    - "[*] injecting neural payload ..... 74%"
+    - "[*] injecting neural payload ..... 100%"
+    - "[!] counter-intrusion detected"
+    - "[!] rerouting through 7 proxies"
+    - "[+] ACCESS GRANTED to: absolutely nothing."
+    - "    // FICTION // No system was touched. This is a sandboxed animation."
 
 blackice:
   title: "FILE 0x09 // BLACK-ICE // SYSOP EYES ONLY"

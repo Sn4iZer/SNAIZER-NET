@@ -41,6 +41,10 @@ class VirtualFS:
         """Contents of a file, or ``None`` if it does not exist."""
         return self._files.get(path)
 
+    def files(self) -> list[tuple[str, str]]:
+        """Every ``(path, text)`` pair, sorted by path."""
+        return sorted(self._files.items())
+
     def listdir(self, path: str) -> list[str]:
         """Sorted entry names in ``path``; directories end with ``/``."""
         prefix = path.rstrip("/") + "/"

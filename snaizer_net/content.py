@@ -13,12 +13,48 @@ from typing import Any, TypeVar
 
 import yaml
 
-PERIOD_RE = re.compile(r"^\d{4}(-(\d{4}|present))?$")
+PERIOD_RE = re.compile(
+    r"^(?:(?P<sm>[A-Za-z]{3})\s+)?(?P<sy>\d{4})"
+    r"(?:\s*-\s*(?:(?P<em>[A-Za-z]{3})\s+)?(?P<ey>\d{4}|present))?$"
+)
+MONTHS = {
+    name: index
+    for index, name in enumerate(
+        ("jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"),
+        start=1,
+    )
+}
 T = TypeVar("T")
 
 
 class ContentError(Exception):
     """Raised when a content file is missing, unreadable or invalid."""
+
+
+@dataclass(frozen=True)
+class Period:
+    """A parsed date range; months are 0 when unspecified, ``end`` None means present."""
+
+    start: tuple[int, int]
+    end: tuple[int, int] | None
+
+
+def parse_period(text: str) -> Period | None:
+    """Parse ``2023``, ``2023-2025``, ``2023-present`` or ``Jun 2026 - Jul 2026``."""
+    match = PERIOD_RE.match(text.strip())
+    if not match:
+        return None
+    start_month = MONTHS.get(match["sm"].lower(), -1) if match["sm"] else 0
+    end_month = MONTHS.get(match["em"].lower(), -1) if match["em"] else 0
+    if start_month < 0 or end_month < 0:
+        return None
+    start = (int(match["sy"]), start_month)
+    if match["ey"] is None:
+        return Period(start, start)
+    if match["ey"] == "present":
+        return Period(start, None)
+    end = (int(match["ey"]), end_month)
+    return Period(start, end) if end >= start else None
 
 
 @dataclass(frozen=True)
@@ -165,6 +201,9 @@ class Lore:
     shell_unknown: tuple[str, ...]
     shell_forbidden: tuple[str, ...]
     shell_motd: str
+    shell_sudo: str
+    shell_fortunes: tuple[str, ...]
+    shell_hack: tuple[str, ...]
     blackice_title: str
     blackice_body: tuple[str, ...]
 
@@ -247,10 +286,12 @@ def _year(data: Any, key: str, where: str) -> int:
 
 
 def _period(data: Any, key: str, where: str) -> str:
-    """Fetch a ``YYYY`` / ``YYYY-YYYY`` / ``YYYY-present`` period."""
+    """Fetch a period string that :func:`parse_period` understands."""
     value = _get(data, key, str, where)
-    if not PERIOD_RE.match(value):
-        raise ContentError(f"{where}.{key}: '{value}' must look like 2023 or 2023-2025")
+    if parse_period(value) is None:
+        raise ContentError(
+            f"{where}.{key}: '{value}' must look like 2023, 2023-2025 or Jun 2026 - Jul 2026"
+        )
     return value
 
 
@@ -386,6 +427,9 @@ def parse_lore(data: Mapping[str, Any], source: str = "lore.yaml") -> Lore:
         shell_unknown=_str_list(shell, "unknown", f"{source}:shell"),
         shell_forbidden=_str_list(shell, "forbidden", f"{source}:shell"),
         shell_motd=_get(shell, "motd", str, f"{source}:shell"),
+        shell_sudo=_get(shell, "sudo", str, f"{source}:shell"),
+        shell_fortunes=_str_list(shell, "fortunes", f"{source}:shell"),
+        shell_hack=_str_list(shell, "hack", f"{source}:shell"),
         blackice_title=_get(blackice, "title", str, f"{source}:blackice"),
         blackice_body=tuple("" if line is None else str(line) for line in body),
     )

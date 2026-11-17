@@ -8,6 +8,7 @@ from textual.containers import Vertical
 from textual.screen import Screen
 from textual.widgets import Static
 
+from snaizer_net.config import ANIM_FPS
 from snaizer_net.content import Lore
 from snaizer_net.markup import safe, tint
 from snaizer_net.screens._app import snaizer_app
@@ -17,6 +18,7 @@ from snaizer_net.widgets.motion import motion_enabled
 LINE_INTERVAL = 0.33
 STATUS_COLORS = {"OK": "green", "WARN": "yellow", "FAIL": "danger"}
 BAR_WIDTH = 40
+SPINNER = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"
 
 
 class BootScreen(Screen[None]):
@@ -27,6 +29,7 @@ class BootScreen(Screen[None]):
         self.lore = lore
         self.stamps: list[float] = []
         self.handed_over = False
+        self.spin_frame = 0
         self._t0 = time.monotonic()
 
     @property
@@ -48,6 +51,7 @@ class BootScreen(Screen[None]):
         if motion_enabled(self):
             self.query_one(GlitchBanner).glitch(6)
             self._ticker = self.set_interval(LINE_INTERVAL, self._next_line)
+            self._spinner = self.set_interval(1 / ANIM_FPS, self._spin)
         else:
             self.stamps = [0.0] * len(self.lore.boot_lines)
             self.set_timer(1.5, self.finish)
@@ -59,7 +63,14 @@ class BootScreen(Screen[None]):
             self._render_log()
         else:
             self._ticker.stop()
+            self._spinner.stop()
+            self._render_log()
+            self.query_one(GlitchBanner).glitch(4)  # final flicker before the gate
             self.set_timer(0.5, self.finish)
+
+    def _spin(self) -> None:
+        self.spin_frame += 1
+        self._render_log()
 
     def _render_log(self) -> None:
         lines = []
@@ -69,6 +80,15 @@ class BootScreen(Screen[None]):
                 f"{tint('dim', f'[{stamp:10.6f}]')} "
                 f"{tint('dim', '[')}{tint(color, f'{line.status:^4}', 'bold')}{tint('dim', ']')} "
                 f"{safe(line.text)}"
+            )
+        if motion_enabled(self) and self.printed < len(self.lore.boot_lines):
+            upcoming = self.lore.boot_lines[self.printed]
+            spinner = SPINNER[self.spin_frame % len(SPINNER)]
+            stamp = time.monotonic() - self._t0
+            lines.append(
+                f"{tint('dim', f'[{stamp:10.6f}]')} "
+                f"{tint('dim', '[')}{tint('magenta', f' {spinner}  ', 'bold')}{tint('dim', ']')} "
+                f"{tint('dim', upcoming.text)}"
             )
         self.query_one("#boot-log", Static).update("\n".join(lines))
         progress = self.printed / max(1, len(self.lore.boot_lines))

@@ -14,13 +14,14 @@ from snaizer_net.widgets.project_card import ProjectCard
 
 EXPECTED = {
     "profile": ["MOHAMMED TCHICHI", "Sn4iZer", "AWARDS", "PROJECTS", "50,000+"],
-    "education": ["B.Sc. Artificial Intelligence & Data Engineering", "DEUG Applied Computer"],
+    "education": ["Master's in Artificial Intelligence & IoT", "B.Sc. Artificial Intelligence"],
     "skills": ["Python (OOP)", "relative proficiency", "LANGUAGES"],
     "projects": ["Data-Driven Pentesting Framework", "CLASSIFIED", "Currency Converter"],
     "awards": ["1ST PLACE", "Innovation Camp", "3RD PLACE", "ENSA Kenitra"],
-    "experience": ["E-commerce Founder", "MAD 35,000"],
+    "experience": ["Sport Leader", "Decathlon Kenitra", "Advised customers"],
     "contact": ["mohammedtchichi03@gmail.com", "https://github.com/Sn4iZer"],
     "terminal": ["simulated node"],
+    "timeline": ["Jun-Jul 2026", "Sport Leader", "2026-2028"],
 }
 
 
@@ -51,7 +52,7 @@ async def test_full_flow_and_every_tab_renders(make_app, size):
         await login(pilot, "case", "wintermute")
         await wait_for_screen(pilot, MainScreen)
         assert app.screen.has_class("-narrow") is (size[0] < 100)
-        for spec in SECTIONS[:8]:
+        for spec in SECTIONS[:9]:
             app.screen.set_focus(None)
             await pilot.press(spec.key)
             await pilot.pause(0.1)
@@ -117,7 +118,7 @@ async def test_login_admin_badge_and_extra_tab(make_app, user):
         await wait_for_screen(pilot, MainScreen)
         assert app.admin
         assert "ADMIN" in screen_text(app)
-        await pilot.press("9")
+        await pilot.press("0")
         await pilot.pause(0.1)
         assert app.screen.current == "blackice"
         assert "FICTION" in screen_text(app)
@@ -127,7 +128,7 @@ async def test_non_admin_has_no_blackice(make_app):
     app = make_app(skip_intro=True)
     async with app.run_test(size=(120, 40)) as pilot:
         await pilot.pause(0.1)
-        await pilot.press("9")
+        await pilot.press("0")
         assert app.screen.current == "profile"
         assert "BLACK-ICE" not in screen_text(app)
 
@@ -146,8 +147,8 @@ async def test_keyboard_navigation(make_app):
         await pilot.press("tab")
         assert screen.current == "skills"
         await pilot.press("up", "up", "up")
-        assert screen.current == "terminal"  # wraps around
-        await pilot.press("escape", "1")
+        assert screen.current == "timeline"  # wraps around
+        await pilot.press("1")
         assert screen.current == "profile"
 
 
@@ -199,7 +200,7 @@ async def test_terminal_commands_through_the_ui(make_app):
         await pilot.press(*"neo", "tab")
         assert app.screen.query_one("#shell-input", Input).value == "neofetch "
         await pilot.press("enter", "up")
-        assert app.screen.query_one("#shell-input", Input).value == "neofetch "
+        assert app.screen.query_one("#shell-input", Input).value == "neofetch"
         await pilot.press("escape")
         assert app.focused is None
         await pilot.press("2")

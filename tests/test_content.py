@@ -4,7 +4,7 @@ import pytest
 import yaml
 
 from snaizer_net.__main__ import main
-from snaizer_net.content import ContentError, load_lore, load_profile
+from snaizer_net.content import ContentError, load_lore, load_profile, parse_period
 
 
 def edit_profile(content_dir: Path, mutate) -> Path:
@@ -21,7 +21,9 @@ def test_real_profile_matches_cv(profile):
     assert profile.contact.email == "mohammedtchichi03@gmail.com"
     assert profile.contact.github_url == "https://github.com/Sn4iZer"
     assert profile.contact.location == "Tiflet, Morocco"
-    assert [edu.period for edu in profile.education] == ["2025-2026", "2023-2025"]
+    assert [edu.period for edu in profile.education] == ["2026-2028", "2025-2026", "2023-2025"]
+    assert profile.education[0].degree.startswith("Master's in Artificial Intelligence & IoT")
+    assert "Master's" in profile.identity.title
     assert len(profile.projects) == 5
     assert len(profile.awards) == 2
     assert {lang.name: lang.level for lang in profile.languages} == {
@@ -32,7 +34,32 @@ def test_real_profile_matches_cv(profile):
     assert profile.projects[0].title == "Data-Driven Pentesting Framework"
     assert any("98%" in bullet for bullet in profile.projects[2].bullets)
     assert {award.place for award in profile.awards} == {"1st Place", "3rd Place"}
-    assert "MAD 35,000" in profile.experience[0].bullets[0]
+    decathlon, ecommerce = profile.experience
+    assert (decathlon.title, decathlon.organization) == ("Sport Leader", "Decathlon Kenitra")
+    assert decathlon.period == "Jun 2026 - Jul 2026"
+    assert len(decathlon.bullets) == 2
+    assert "MAD 35,000" in ecommerce.bullets[0]
+
+
+@pytest.mark.parametrize(
+    ("text", "start", "end"),
+    [
+        ("2023", (2023, 0), (2023, 0)),
+        ("2023-2025", (2023, 0), (2025, 0)),
+        ("2023-present", (2023, 0), None),
+        ("Jun 2026 - Jul 2026", (2026, 6), (2026, 7)),
+        ("sep 2026 - present", (2026, 9), None),
+    ],
+)
+def test_parse_period_accepts(text, start, end):
+    period = parse_period(text)
+    assert period is not None
+    assert (period.start, period.end) == (start, end)
+
+
+@pytest.mark.parametrize("text", ["last year", "2025-2023", "Foo 2026", "Jul 2026 - Jun 2026", ""])
+def test_parse_period_rejects(text):
+    assert parse_period(text) is None
 
 
 def test_lore_is_loaded_and_has_required_boot_lines(lore):

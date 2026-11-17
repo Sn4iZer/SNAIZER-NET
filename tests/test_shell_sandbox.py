@@ -80,7 +80,7 @@ def test_dangerous_input_never_executes(profile, lore, tripwires, line):
 def test_forbidden_commands_get_a_clear_message(profile, lore):
     shell = FakeShell(profile, lore, rng=random.Random(1))
     for line in ("rm -rf /", "sudo su", "/usr/bin/python3 -c 1"):
-        text = Content.from_markup(shell.execute(line).lines[0]).plain
+        text = " ".join(Content.from_markup(m).plain for m in shell.execute(line).lines)
         assert "Nothing was executed" in text or "nothing ran" in text
 
 

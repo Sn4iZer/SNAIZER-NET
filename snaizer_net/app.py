@@ -9,6 +9,7 @@ from textual.screen import Screen
 
 from snaizer_net.config import MIN_HEIGHT, MIN_WIDTH, RunConfig
 from snaizer_net.content import Lore, Profile
+from snaizer_net.palette import SnaizerCommands
 from snaizer_net.screens.boot import BootScreen
 from snaizer_net.screens.login import LoginScreen
 from snaizer_net.screens.main import MainScreen
@@ -28,7 +29,8 @@ class SnaizerApp(App[None]):
 
     CSS_PATH = "theme.tcss"
     TITLE = "SNAIZER//NET"
-    ENABLE_COMMAND_PALETTE = False
+    COMMANDS = {SnaizerCommands}
+    COMMAND_PALETTE_BINDING = "ctrl+p"
     BINDINGS = [Binding("ctrl+c", "quit", "quit", show=False, priority=True)]
 
     def __init__(self, config: RunConfig, profile: Profile, lore: Lore) -> None:
@@ -39,6 +41,7 @@ class SnaizerApp(App[None]):
         self.user = ""
         self.admin = False
         self._too_small = False
+        self._animations = config.animations
         for theme in all_themes():
             self.register_theme(theme)
         self.theme = self.initial_theme()
@@ -62,7 +65,18 @@ class SnaizerApp(App[None]):
     @property
     def motion_enabled(self) -> bool:
         """Animations run unless disabled by flag or the terminal is too small."""
-        return self.config.animations and not self._too_small
+        return self._animations and not self._too_small
+
+    def toggle_animations(self) -> None:
+        """Switch animations on/off at runtime (command palette)."""
+        self._animations = not self._animations
+        state = "on" if self._animations else "off"
+        self.notify(f"animations {state}", title="ACCESSIBILITY")
+
+    def action_command_palette(self) -> None:
+        """Open the palette only on the main HUD (not during boot / login)."""
+        if isinstance(self.screen, MainScreen):
+            super().action_command_palette()
 
     def on_mount(self) -> None:
         """Start with the boot sequence (or straight to the HUD with --skip-intro)."""

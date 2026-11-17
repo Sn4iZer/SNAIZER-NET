@@ -82,7 +82,8 @@ def fit_items(items: list[tuple[str, str]], width: int) -> str:
 
 
 GLOBAL_HINTS = [
-    ("1-9", "jump"),
+    ("0-9", "jump"),
+    ("/", "search"),
     ("↑↓ jk TAB", "move"),
     ("PgUp/PgDn", "scroll"),
     ("m", "rain"),
@@ -90,7 +91,7 @@ GLOBAL_HINTS = [
     ("q", "quit"),
 ]
 CONTEXT_HINTS = {
-    "projects": [("↑↓ jk", "pick"), ("ENTER", "open dossier"), ("1-9", "jump"), ("?", "help")],
+    "projects": [("↑↓ jk", "pick"), ("ENTER", "open"), ("f", "filter"), ("0-9", "jump")],
     "terminal": [
         ("ESC", "leave terminal"),
         ("TAB", "complete"),

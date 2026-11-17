@@ -12,11 +12,13 @@ from snaizer_net.markup import tint
 from snaizer_net.widgets.matrix_rain import MatrixRain
 
 HELP_ROWS = [
-    ("1-9", "jump to a section"),
+    ("0-9", "jump to a section (0 = BLACK-ICE, admins only)"),
+    ("/ or ctrl+p", "command palette: search sections, dossiers, themes"),
     ("↑ ↓ / j k", "previous / next section"),
     ("TAB / shift+TAB", "next / previous section"),
     ("mouse", "click the navigation, buttons and list items"),
     ("ENTER", "expand / collapse a project dossier"),
+    ("f / F", "cycle project tag filters"),
     ("PgUp / PgDn", "scroll the current section"),
     ("ESC", "leave the TERMINAL prompt"),
     ("m", "matrix rain mode"),
@@ -40,7 +42,11 @@ class HelpScreen(ModalScreen[None]):
             f"{tint('cyan', key.ljust(width), 'bold')}  {tint('text', what)}"
             for key, what in HELP_ROWS
         ]
-        rows += ["", tint("dim", "TERMINAL: try help, neofetch, projects, theme synthwave"), ""]
+        rows += [
+            "",
+            tint("dim", "TERMINAL: try help, neofetch, timeline, grep python, open 1, hack"),
+            "",
+        ]
         rows.append(tint("dim", "press ESC or ? to close"))
         with Vertical(id="help-box"):
             yield Static("\n".join(rows))

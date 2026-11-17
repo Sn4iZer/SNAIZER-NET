@@ -51,7 +51,7 @@ class Sidebar(Vertical):
         for spec in self.sections:
             yield NavItem(spec, compact=False)
         yield Static("", classes="nav-spacer")
-        yield Static("m  matrix\n?  help\nq  quit", classes="nav-footer")
+        yield Static("/  search\nm  matrix\n?  help\nq  quit", classes="nav-footer")
 
     def set_active(self, section_id: str) -> None:
         """Highlight the current section."""

@@ -164,6 +164,7 @@ MainScreen.-narrow #sidebar {
 
 #tabstrip .nav-item {
     width: auto;
+    padding: 0 1 0 0;
 }
 
 .nav-item:hover {
@@ -179,6 +180,19 @@ MainScreen.-narrow #sidebar {
     color: $neon-bg;
     background: $neon-cyan;
     text-style: bold;
+}
+
+/* neon pulse: MainScreen toggles -pulse a couple of times per second */
+MainScreen.-pulse .nav-item.-active {
+    background: $neon-magenta;
+}
+
+MainScreen.-pulse #dossier {
+    border: double $neon-magenta;
+}
+
+MainScreen.-pulse #pane {
+    border: double $neon-cyan 70%;
 }
 
 .nav-spacer {
@@ -273,6 +287,52 @@ MainScreen.-narrow .avatar {
     border: round $neon-magenta;
 }
 
+#sensor-panel {
+    height: auto;
+    margin-top: 1;
+    padding: 0 1;
+    background: $neon-bg;
+    border: round $neon-green 60%;
+    border-title-color: $neon-green;
+    border-title-style: bold;
+    border-subtitle-color: $neon-dim;
+}
+
+.sensor-row {
+    height: 1;
+}
+
+.sensor-label {
+    width: 14;
+}
+
+.sensor-value {
+    width: 10;
+    text-align: right;
+}
+
+Sparkline {
+    width: 1fr;
+}
+
+Sparkline > .sparkline--max-color {
+    color: $neon-cyan;
+}
+
+Sparkline > .sparkline--min-color {
+    color: $neon-magenta 50%;
+}
+
+#scanline {
+    color: $neon-cyan;
+}
+
+/* timeline */
+
+#timeline-body {
+    padding: 0 1;
+}
+
 /* projects */
 
 #project-list {
@@ -286,6 +346,10 @@ MainScreen.-narrow .avatar {
 
 #project-list:focus {
     border: heavy $neon-cyan;
+}
+
+#project-list {
+    border-subtitle-color: $neon-dim;
 }
 
 #project-list > ListItem {

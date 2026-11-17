@@ -20,9 +20,13 @@ from snaizer_net.markup import safe, tint
 from snaizer_net.shell.tokenizer import tokenize
 from snaizer_net.shell.vfs import HOME, build_vfs
 from snaizer_net.themes import DEFAULT_THEME, USER_THEMES
+from snaizer_net.timeline import KIND_COLOR, KIND_GLYPH, build_timeline
 
-Action = Literal["clear", "exit", "matrix", "theme"]
+Action = Literal["clear", "exit", "matrix", "theme", "open_project"]
 NEOFETCH_VALUE_WIDTH = 44
+MAX_HISTORY = 100
+MAX_GREP_MATCHES = 30
+DEFAULT_PACE = 3
 
 FORBIDDEN = frozenset(
     {
@@ -35,11 +39,13 @@ FORBIDDEN = frozenset(
 
 @dataclass(frozen=True)
 class ShellResult:
-    """Output of one command: markup lines plus an optional UI action."""
+    """Output of one command: markup lines, an optional UI action, a streaming pace."""
 
     lines: tuple[str, ...] = ()
     action: Action | None = None
     argument: str | None = None
+    pace: int = DEFAULT_PACE
+    """Lines revealed per animation frame when the UI streams the output."""
 
 
 @dataclass(frozen=True)
@@ -86,6 +92,7 @@ class FakeShell:
         self._rng = rng or random.Random()
         self._clock = clock
         self._started = clock()
+        self.history: list[str] = []
         self.commands: dict[str, Command] = {
             "help": Command(self._help, "help", "list available programs"),
             "whoami": Command(self._whoami, "whoami", "print your runner identity"),
@@ -94,10 +101,16 @@ class FakeShell:
             "pwd": Command(self._pwd, "pwd", "print working directory"),
             "cat": Command(self._cat, "cat <file>...", "print a file"),
             "echo": Command(self._echo, "echo <text>", "print text (no expansion, ever)"),
+            "grep": Command(self._grep, "grep <text>", "search every file for text"),
             "projects": Command(self._projects, "projects", "list mission dossiers"),
+            "open": Command(self._open, "open <n|slug>", "open a project dossier"),
+            "timeline": Command(self._timeline, "timeline", "chronological career log"),
             "skills": Command(self._skills, "skills", "show skill matrix"),
             "contact": Command(self._contact, "contact", "show contact channels"),
             "neofetch": Command(self._neofetch, "neofetch", "system info, runner style"),
+            "fortune": Command(self._fortune, "fortune", "a byte of runner wisdom"),
+            "hack": Command(self._hack, "hack", "totally real intrusion (fiction)"),
+            "history": Command(self._history, "history", "list previous commands"),
             "matrix": Command(self._matrix, "matrix", "enter the rain"),
             "theme": Command(self._theme, "theme [name]", "list or switch color themes"),
             "clear": Command(self._clear, "clear", "clear the screen"),
@@ -120,10 +133,17 @@ class FakeShell:
         tokens = tokenize(line.strip())
         if not tokens:
             return ShellResult()
+        self.history.append(line.strip())
+        del self.history[:-MAX_HISTORY]
         name, args = tokens[0], tokens[1:]
         command = self.commands.get(name)
         if command is not None:
             return command.handler(args)
+        if name == "sudo":
+            return _out(
+                tint("danger", self.lore.shell_sudo.format(user=self.user), "bold"),
+                tint("dim", "Nothing was executed."),
+            )
         if posixpath.basename(name) in FORBIDDEN:
             template = self._rng.choice(self.lore.shell_forbidden)
             return _out(tint("danger", template.format(cmd=name[:40]), "bold"))
@@ -279,6 +299,76 @@ class FakeShell:
                 value = f"{tint('magenta', label + ':', 'bold')} {safe(value)}"
             lines.append(f"{left}  {value}")
         return _out(*lines)
+
+    def _grep(self, args: list[str]) -> ShellResult:
+        if not args:
+            return _out(tint("yellow", "usage: grep <text>   (try: grep python)"))
+        needle = " ".join(args)
+        lowered = needle.lower()
+        hits: list[str] = []
+        for path, text in self.vfs.files():
+            for line in text.splitlines():
+                index = line.lower().find(lowered)
+                if index < 0:
+                    continue
+                before, found, after = (
+                    line[:index],
+                    line[index : index + len(needle)],
+                    line[index + len(needle) :],
+                )
+                hits.append(
+                    f"{tint('magenta', path)}{tint('dim', ':')} "
+                    f"{safe(before)}{tint('yellow', found, 'bold reverse')}{safe(after)}"
+                )
+        if not hits:
+            return _out(tint("dim", f"grep: no match for '{needle}'"))
+        extra = len(hits) - MAX_GREP_MATCHES
+        lines = hits[:MAX_GREP_MATCHES]
+        if extra > 0:
+            lines.append(tint("dim", f"... {extra} more match(es)"))
+        return _out(*lines)
+
+    def _open(self, args: list[str]) -> ShellResult:
+        projects = self.profile.projects
+        if not args:
+            return _out(tint("yellow", f"usage: open <1-{len(projects)}|slug>   (try: open 1)"))
+        choice = args[0].lower()
+        for index, project in enumerate(projects, start=1):
+            if choice in (str(index), f"{index:02d}", project.slug):
+                return _out(
+                    tint("green", f"decrypting dossier #{index:02d}: {project.title}"),
+                    action="open_project",
+                    argument=project.slug,
+                )
+        return _out(tint("danger", f"open: no dossier '{args[0]}'. Run 'projects' to list."))
+
+    def _timeline(self, args: list[str]) -> ShellResult:
+        lines = [tint("magenta", "CAREER LOG // newest first", "bold")]
+        entries = build_timeline(self.profile)
+        width = max(len(entry.when) for entry in entries)
+        for entry in entries:
+            color = KIND_COLOR[entry.kind]
+            lines.append(
+                f"  {tint('dim', entry.when.rjust(width))} {tint(color, KIND_GLYPH[entry.kind])} "
+                f"{tint(color, entry.title, 'bold')} {tint('dim', '· ' + entry.detail)}"
+            )
+        return _out(*lines)
+
+    def _fortune(self, args: list[str]) -> ShellResult:
+        return _out(tint("cyan", f"“{self._rng.choice(self.lore.shell_fortunes)}”"))
+
+    def _hack(self, args: list[str]) -> ShellResult:
+        colors = {"[*]": "cyan", "[!]": "danger", "[+]": "green"}
+        lines = [tint(colors.get(line.strip()[:3], "dim"), line) for line in self.lore.shell_hack]
+        return ShellResult(tuple(lines), pace=1)
+
+    def _history(self, args: list[str]) -> ShellResult:
+        return _out(
+            *(
+                f"{tint('dim', f'{index:>4}')}  {safe(entry)}"
+                for index, entry in enumerate(self.history, start=1)
+            )
+        )
 
     def _matrix(self, args: list[str]) -> ShellResult:
         return _out(

@@ -23,7 +23,8 @@ SECTIONS: tuple[SectionSpec, ...] = (
     SectionSpec("6", "experience", "EXPERIENCE", "EXP"),
     SectionSpec("7", "contact", "CONTACT", "CTC"),
     SectionSpec("8", "terminal", "TERMINAL", "TERM"),
-    SectionSpec("9", "blackice", "BLACK-ICE", "ICE", admin_only=True),
+    SectionSpec("9", "timeline", "TIMELINE", "TIME"),
+    SectionSpec("0", "blackice", "BLACK-ICE", "ICE", admin_only=True),
 )
 
 

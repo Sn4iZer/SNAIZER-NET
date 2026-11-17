@@ -23,12 +23,14 @@ from snaizer_net.sections import (
     ProjectsSection,
     SkillsSection,
     TerminalSection,
+    TimelineSection,
 )
 from snaizer_net.shell.commands import FakeShell
 from snaizer_net.themes import USER_THEMES
 from snaizer_net.widgets.fake_shell import FakeShellWidget
 from snaizer_net.widgets.glitch_label import GlitchLabel
 from snaizer_net.widgets.nav import NavItem, Sidebar, TabStrip
+from snaizer_net.widgets.scanline import ScanLine
 from snaizer_net.widgets.status_bar import KeyHints, StatusBar
 
 
@@ -43,9 +45,11 @@ class MainScreen(Screen[None]):
         Binding("pagedown", "scroll_section(1)", "scroll down", show=False),
         Binding("pageup", "scroll_section(-1)", "scroll up", show=False),
         Binding("m", "matrix", "matrix", show=False),
+        Binding("slash", "app.command_palette", "search", show=False),
         Binding("question_mark", "help", "help", show=False),
         Binding("q", "quit", "quit", show=False),
     ]
+    PULSE_SECONDS = 0.6
 
     def __init__(self, profile: Profile, lore: Lore, user: str, admin: bool) -> None:
         super().__init__()
@@ -82,14 +86,24 @@ class MainScreen(Screen[None]):
                     yield ExperienceSection(self.profile, id="experience")
                     yield ContactSection(self.profile, app.config.is_web, id="contact")
                     yield TerminalSection(shell, id="terminal")
+                    yield TimelineSection(self.profile, id="timeline")
                     if self.admin:
                         yield BlackIceSection(self.lore, id="blackice")
+                yield ScanLine(id="scanline")  # last child, so it draws on top
         yield KeyHints(id="key-hints")
 
     def on_mount(self) -> None:
         """Apply the layout for the current width and show the first section."""
         self._apply_width(self.app.size.width)
-        self.show_section(self.current)
+        self.show_section(self.current, sweep=False)
+        self.set_interval(self.PULSE_SECONDS, self._pulse)
+
+    def _pulse(self) -> None:
+        """Breathe the active nav item and dossier border (CSS keyed on -pulse)."""
+        if snaizer_app(self).motion_enabled:
+            self.toggle_class("-pulse")
+        else:
+            self.remove_class("-pulse")
 
     def on_resize(self, event: events.Resize) -> None:
         """Collapse the sidebar into a tab strip on narrow terminals."""
@@ -98,11 +112,13 @@ class MainScreen(Screen[None]):
     def _apply_width(self, width: int) -> None:
         self.set_class(width < NARROW_WIDTH, "-narrow")
 
-    def show_section(self, section_id: str) -> None:
+    def show_section(self, section_id: str, sweep: bool = True) -> None:
         """Switch the content pane to ``section_id`` and update navigation."""
         spec = next((s for s in self.sections if s.id == section_id), None)
         if spec is None:
             return
+        if sweep and section_id != self.current:
+            self.query_one(ScanLine).sweep()
         self.current = section_id
         self.query_one(ContentSwitcher).current = section_id
         self.query_one("#section-title", GlitchLabel).set_text(
@@ -140,6 +156,16 @@ class MainScreen(Screen[None]):
         else:
             section.scroll_page_up()
 
+    def open_project(self, slug: str) -> None:
+        """Jump to PROJECTS and expand the dossier ``slug``."""
+        self.show_section("projects")
+        self.call_later(self.query_one(ProjectsSection).open_project, slug)
+
+    def filter_projects(self, tag: str | None) -> None:
+        """Jump to PROJECTS filtered by ``tag`` (``None`` = all)."""
+        self.show_section("projects")
+        self.call_later(self.query_one(ProjectsSection).set_filter, tag)
+
     def action_matrix(self) -> None:
         """Enter matrix rain mode."""
         self.app.push_screen(MatrixScreen())
@@ -164,5 +190,7 @@ class MainScreen(Screen[None]):
             self.app.exit()
         elif message.action == "matrix":
             self.action_matrix()
+        elif message.action == "open_project" and message.argument:
+            self.open_project(message.argument)
         elif message.action == "theme" and message.argument:
             snaizer_app(self).set_neon_theme(message.argument)

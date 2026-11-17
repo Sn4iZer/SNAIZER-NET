@@ -4,14 +4,16 @@ from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Horizontal, Vertical, VerticalScroll
 from textual.message import Message
+from textual.timer import Timer
 from textual.widgets import Input, Static
 
+from snaizer_net.config import ANIM_FPS
 from snaizer_net.markup import safe, tint
 from snaizer_net.shell.commands import Action, FakeShell
 from snaizer_net.shell.tokenizer import MAX_INPUT
+from snaizer_net.widgets.motion import motion_enabled
 
 MAX_LINES = 400
-MAX_HISTORY = 100
 
 
 class ShellInput(Input):
@@ -46,7 +48,7 @@ class ShellInput(Input):
 
 
 class FakeShellWidget(Vertical):
-    """Scrollback plus a prompt line."""
+    """Scrollback plus a prompt line; command output streams in line by line."""
 
     class ActionRequested(Message):
         """The shell asked the UI to do something (clear excluded)."""
@@ -60,7 +62,9 @@ class FakeShellWidget(Vertical):
         super().__init__(id=id)
         self.shell = shell
         self.lines: list[str] = []
-        self.history: list[str] = []
+        self.pending: list[str] = []
+        self._pace = 1
+        self._stream_timer: Timer | None = None
         self._history_index = 0
 
     def compose(self) -> ComposeResult:
@@ -80,23 +84,53 @@ class FakeShellWidget(Vertical):
         )
 
     def write(self, *lines: str) -> None:
-        """Append markup lines to the scrollback."""
+        """Append markup lines to the scrollback immediately."""
         self.lines.extend(lines)
         del self.lines[:-MAX_LINES]
+        self._render_lines()
+
+    def _render_lines(self) -> None:
         self.query_one("#shell-output", Static).update("\n".join(self.lines))
         self.query_one("#shell-scroll", VerticalScroll).scroll_end(animate=False)
 
+    def stream(self, lines: tuple[str, ...], pace: int) -> None:
+        """Reveal ``lines`` a few per frame (instantly without motion)."""
+        if not motion_enabled(self) or len(lines) <= pace:
+            self.write(*lines)
+            return
+        self.pending.extend(lines)
+        self._pace = max(1, pace)
+        if self._stream_timer is None:
+            self._stream_timer = self.set_interval(1 / ANIM_FPS, self._stream_tick)
+
+    def _stream_tick(self) -> None:
+        batch, self.pending = self.pending[: self._pace], self.pending[self._pace :]
+        self.write(*batch)
+        if not self.pending:
+            self._stop_stream()
+
+    def flush(self) -> None:
+        """Print any output still streaming."""
+        if self.pending:
+            batch, self.pending = self.pending, []
+            self.write(*batch)
+        self._stop_stream()
+
+    def _stop_stream(self) -> None:
+        if self._stream_timer is not None:
+            self._stream_timer.stop()
+            self._stream_timer = None
+
     def run_command(self, line: str) -> None:
         """Echo ``line``, execute it in the sandbox and show the result."""
+        self.flush()
         self.write(self.shell.prompt + safe(line))
-        if line.strip():
-            self.history.append(line)
-            del self.history[:-MAX_HISTORY]
-        self._history_index = len(self.history)
         result = self.shell.execute(line)
+        self._history_index = len(self.shell.history)
         if result.action == "clear":
             self.lines.clear()
-        self.write(*result.lines)
+            self._render_lines()
+        self.stream(result.lines, result.pace)
         self.query_one("#shell-prompt", Static).update(self.shell.prompt)
         if result.action and result.action != "clear":
             self.post_message(self.ActionRequested(result.action, result.argument))
@@ -117,12 +151,11 @@ class FakeShellWidget(Vertical):
                 field.value = completed
                 field.cursor_position = len(completed)
             return
-        if not self.history:
+        history = self.shell.history
+        if not history:
             return
-        self._history_index = max(0, min(len(self.history), self._history_index + event.delta))
-        field.value = (
-            self.history[self._history_index] if self._history_index < len(self.history) else ""
-        )
+        self._history_index = max(0, min(len(history), self._history_index + event.delta))
+        field.value = history[self._history_index] if self._history_index < len(history) else ""
         field.cursor_position = len(field.value)
 
     def focus_input(self) -> None:

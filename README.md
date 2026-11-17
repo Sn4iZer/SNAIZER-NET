@@ -6,9 +6,9 @@
 ▀▀▀▀  ▀   ▀ ▀   ▀ ▀▀▀▀▀ ▀▀▀▀▀ ▀▀▀▀▀ ▀   ▀ ▀     ▀     ▀   ▀ ▀▀▀▀▀   ▀
 ```
 
-A cyberpunk terminal portfolio for **Mohammed Tchichi (Sn4iZer)**, AI & Data
-Engineering student. A single [Textual](https://textual.textualize.io) app,
-served three ways:
+A cyberpunk terminal portfolio for **Mohammed Tchichi (Sn4iZer)**, 1st-year
+Master's student in AI & IoT. A single [Textual](https://textual.textualize.io)
+app, served three ways:
 
 | Mode  | How                                   |
 |-------|---------------------------------------|
@@ -39,26 +39,41 @@ Every visit opens with a boot sequence and a **fake** "neural-link" login
 
 ## Features
 
-- **Boot sequence**: BIOS-style log, glitching logo, progress bar. Any key skips.
+- **Boot sequence**: BIOS-style log with a spinner on the line being
+  loaded, glitching logo, progress bar. Any key skips.
 - **Fake login**: masked passphrase, red shake on empty fields, a fake trace
   joke on `1234`, a hint for `guest`/`guest`, and an **ADMIN** badge plus a
-  secret `[9] BLACK-ICE` tab for `snaizer` or `admin`.
+  secret `[0] BLACK-ICE` tab for `snaizer` or `admin`.
 - **Main HUD**: ticking status bar (fake CPU/NET, real uptime and clock),
-  sidebar navigation that collapses into a tab strip under 100 columns, and
-  context-aware key hints.
-- **Sections**: profile (typewriter bio, headline stats), education, animated
-  skill bars, project "dossiers" (Enter expands), awards, experience, contact,
-  and a sandboxed **fake shell** (`help`, `whoami`, `ls`, `cat`, `projects`,
-  `skills`, `contact`, `neofetch`, `matrix`, `theme`, `clear`, `exit`, ...).
+  sidebar navigation that collapses into a tab strip under 100 columns,
+  context-aware key hints, a neon scanline sweep on every section change and
+  a slow neon "pulse" on the active item.
+- **Sections**:
+  - profile: typewriter bio, stat counters that count up, and a clearly
+    labelled **simulated IoT telemetry** panel with live sparklines;
+  - education and animated skill bars;
+  - project "dossiers" (Enter expands, `f` filters by tag);
+  - awards, experience and contact;
+  - a **timeline** that merges degrees, jobs, projects and awards into one
+    animated career log;
+  - a sandboxed **fake shell**.
+- **Command palette** (`/` or `Ctrl+P`): fuzzy-search sections, dossiers, tag
+  filters, themes and actions (including turning animations on/off).
+- **Fake shell commands**: `help`, `whoami`, `ls`, `cd`, `pwd`, `cat`,
+  `echo`, `grep`, `projects`, `open <n>`, `timeline`, `skills`, `contact`,
+  `neofetch`, `fortune`, `hack`, `history`, `matrix`, `theme`, `clear`,
+  `exit` (and try `sudo`). Output streams in line by line.
 - **Themes**: `neon-night` (default), `synthwave`, `toxic-green`,
   `red-alert`, plus `neon-16` for 16-color terminals (picked automatically).
 - **Matrix rain** with `m` (or `matrix` in the shell).
 - **Accessible**: works at 80x24, every animation is ≤ 12 fps, `--no-anim`
-  turns them all off, and below 80x24 you get a friendly "enlarge" notice.
+  (or the palette) turns them all off, and below 80x24 you get a friendly
+  "enlarge" notice.
 
-**Keys:** `1-9` jump · `↑↓`/`j k`/`Tab` move · `Enter` open dossier ·
-`PgUp/PgDn` scroll · `m` rain · `?` help · `q` / `Ctrl+C` quit · `Esc`
-leaves the terminal prompt. The mouse works everywhere.
+**Keys:** `0-9` jump · `/` search · `↑↓`/`j k`/`Tab` move · `Enter` open
+dossier · `f`/`F` filter projects · `PgUp/PgDn` scroll · `m` rain · `?` help
+· `q` / `Ctrl+C` quit · `Esc` leaves the terminal prompt. The mouse works
+everywhere.
 
 ## Quick start (local)
 
@@ -129,6 +144,8 @@ No widget hardcodes any of it. Edit the YAML and restart. There is no build step
 - `education`, `skills` (with a stylized 0-100 `level`), `languages` (the
   `level` text is shown as-is, `bar` only drives the visual), `projects`
   (`slug` must be kebab-case and unique), `awards`, `experience`.
+- Periods accept `2023`, `2023-2025`, `2023-present` or month ranges like
+  `Jun 2026 - Jul 2026`. The timeline sorts on them automatically.
 
 Fictional flavor text (boot log lines, shell jokes, the BLACK-ICE lore) lives
 separately in [`content/lore.yaml`](content/lore.yaml).
@@ -351,12 +368,15 @@ snaizer-net/
 │   ├── themes.py          palettes → Textual themes
 │   ├── content.py         YAML loading + validation
 │   ├── auth_theater.py    pure fake-login rules
+│   ├── timeline.py        merged, sorted career log
+│   ├── palette.py         command palette provider
 │   ├── config.py · markup.py · navigation.py
 │   ├── screens/           boot · login · main · overlays (help/matrix/too-small)
 │   ├── sections/          one pane per navigation entry
 │   ├── shell/             sandboxed fake shell (commands, vfs, tokenizer)
 │   ├── widgets/           matrix_rain · glitch_label · skill_bar · typewriter
 │   │                      fake_shell · project_card · hex_stream · nav · status_bar
+│   │                      counter · sensor_panel · scanline
 │   └── assets/ascii.py    block font + ASCII art
 ├── servers/               web.py · ssh_server.py · pty_bridge.py · limits.py · healthcheck.py
 ├── tests/
@@ -371,4 +391,5 @@ snaizer-net/
   source tree, or point `SNAIZER_CONTENT_DIR` at your content.
 - "Matrix rain mode" is a full-screen overlay. Terminals can't layer text
   behind other text, so it isn't a literal background.
-- Fake CPU/NET readings are decorative. Uptime and clock are real.
+- Fake CPU/NET readings and the IoT telemetry panel are decorative random
+  data, labelled as such in the UI. Uptime and clock are real.

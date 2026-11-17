@@ -24,7 +24,8 @@ def test_empty_input_does_nothing(shell):
 def test_help_lists_every_command(shell):
     text = plain(shell.execute("help"))
     for name in ("help", "whoami", "ls", "cat", "projects", "skills", "contact", "neofetch",
-                 "matrix", "theme", "clear", "exit"):  # fmt: skip
+                 "matrix", "theme", "clear", "exit", "grep", "open", "timeline", "fortune",
+                 "hack", "history"):  # fmt: skip
         assert name in text
 
 
@@ -128,6 +129,48 @@ def test_admin_only_file(profile, lore, shell):
     admin = FakeShell(profile, lore, admin=True)
     assert "BLACK-ICE" in plain(admin.execute("cat /root/blackice.log"))
     assert "no such file" in plain(shell.execute("cat /root/blackice.log"))
+
+
+def test_grep_is_literal_and_highlights(shell):
+    text = plain(shell.execute("grep decathlon"))
+    assert "experience.txt" in text and "Decathlon Kenitra" in text
+    assert "no match" in plain(shell.execute("grep zzzqqq"))
+    assert "usage" in plain(shell.execute("grep"))
+    # regex metacharacters are plain text, never patterns
+    assert "no match" in plain(shell.execute("grep .*(a+)+$"))
+
+
+def test_open_project(shell, profile):
+    result = shell.execute("open 2")
+    assert (result.action, result.argument) == ("open_project", profile.projects[1].slug)
+    assert shell.execute("open nids").argument == "nids"
+    assert shell.execute("open 99").action is None
+    assert "usage" in plain(shell.execute("open"))
+
+
+def test_timeline_command_lists_new_entries(shell):
+    text = plain(shell.execute("timeline"))
+    assert "Sport Leader" in text
+    assert "Master's in Artificial Intelligence & IoT" in text
+    assert text.index("Sport Leader") < text.index("E-commerce Founder")
+
+
+def test_fortune_hack_and_sudo(shell, lore):
+    assert plain(shell.execute("fortune")).strip("“”") in lore.shell_fortunes
+    hack = shell.execute("hack")
+    assert hack.pace == 1
+    assert "FICTION" in plain(hack)
+    sudo = plain(shell.execute("sudo make me a sandwich"))
+    assert "sudoers" in sudo and "Nothing was executed" in sudo
+
+
+def test_history_records_commands(shell):
+    shell.execute("whoami")
+    shell.execute("   ")
+    shell.execute("ls")
+    assert shell.history == ["whoami", "ls"]
+    text = plain(shell.execute("history"))
+    assert "1  whoami" in text and "3  history" in text
 
 
 def test_tokenizer_handles_unbalanced_quotes():
