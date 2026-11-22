@@ -7,7 +7,7 @@ Environment:
                       When unset, it is derived from each request (honoring
                       X-Forwarded-Proto / X-Forwarded-Host from Caddy).
     WEB_MAX_SESSIONS  concurrent browser sessions (default 50)
-    SSH_PUBLIC_PORT   SSH port advertised on the page (default 2222)
+    SSH_PUBLIC_PORT   SSH port advertised on the page (default 2222; 0 hides the hint)
 """
 
 import os
@@ -30,7 +30,12 @@ STATICS = Path(textual_serve.__file__).resolve().parent / "static"
 
 
 def ssh_command(public_url: str, ssh_port: int) -> str:
-    """The ``ssh`` line shown on the page, e.g. ``ssh -p 2222 guest@example.com``."""
+    """The ``ssh`` line shown on the page, e.g. ``ssh -p 2222 guest@example.com``.
+
+    Port ``0`` means "no SSH gateway here" (e.g. on Hugging Face Spaces): returns ``""``.
+    """
+    if ssh_port == 0:
+        return ""
     host = urlsplit(public_url).hostname or "localhost"
     port = "" if ssh_port == 22 else f"-p {ssh_port} "
     return f"ssh {port}guest@{host}"

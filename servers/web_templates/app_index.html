@@ -181,7 +181,7 @@
   <body data-pingurl="{{ ping_url }}">
     <div class="session intro">
       <p><span class="host">snaizer-net</span> <span class="muted">login:</span> connecting<span class="cursor"></span></p>
-      <noscript><p>This portfolio runs in a live terminal and needs JavaScript. You can also open it with <code>{{ ssh_command }}</code>.</p></noscript>
+      <noscript><p>This portfolio runs in a live terminal and needs JavaScript. {% if ssh_command %}You can also open it with <code>{{ ssh_command }}</code>.{% endif %}</p></noscript>
       <div class="actions">
         <button type="button" onclick="refresh()" id="start">Connect</button>
       </div>
@@ -192,7 +192,7 @@
       <p class="muted">Sessions end when you quit or after 15 idle minutes.</p>
       <div class="actions">
         <button type="button" onclick="refresh()">Reconnect</button>
-        <span class="muted">or from a terminal: <code>{{ ssh_command }}</code></span>
+        {% if ssh_command %}<span class="muted">or from a terminal: <code>{{ ssh_command }}</code></span>{% endif %}
       </div>
     </div>
 

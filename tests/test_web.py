@@ -47,6 +47,14 @@ async def test_public_url_overrides_request():
 def test_ssh_command():
     assert ssh_command("https://snaizer.example:443", 2222) == "ssh -p 2222 guest@snaizer.example"
     assert ssh_command("https://snaizer.example", 22) == "ssh guest@snaizer.example"
+    assert ssh_command("https://snaizer.example", 0) == ""
+
+
+async def test_page_hides_ssh_hint_when_there_is_no_gateway():
+    server = make_server(public_url="https://snaizer.example", ssh_port=0)
+    async with TestClient(TestServer(await server._make_app())) as client:
+        html = await (await client.get("/")).text()
+    assert "ssh " not in html and "from a terminal" not in html
 
 
 async def test_page_uses_local_font_and_ssh_hint():

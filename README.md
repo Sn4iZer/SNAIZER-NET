@@ -1,3 +1,14 @@
+---
+title: SNAIZER//NET
+emoji: 🕶️
+colorFrom: pink
+colorTo: blue
+sdk: docker
+app_port: 8000
+pinned: false
+short_description: Cyberpunk terminal portfolio of Mohammed Tchichi (Sn4iZer)
+---
+
 # SNAIZER//NET
 
 ```
@@ -268,6 +279,32 @@ ssh -p 2222 guest@snaizer.example.com ls     # refused (exec is disabled)
 ```
 
 Updating later: `git pull && docker compose up -d --build`.
+
+## Free web hosting on Hugging Face Spaces (no SSH)
+
+Spaces runs the existing `Dockerfile`, so there is nothing to build by hand.
+The YAML block at the top of this README (`sdk: docker`, `app_port: 8000`)
+tells Spaces what to do. SSH is not possible there (one HTTP port only).
+
+1. Create a Space at <https://huggingface.co/new-space>: SDK **Docker**,
+   template **Blank**, visibility **Public**.
+2. In the Space's **Settings → Variables**, add:
+   - `PUBLIC_URL` = `https://<user>-<space>.hf.space`
+   - `SSH_PUBLIC_PORT` = `0` (hides the `ssh` hint on the page)
+   - `WEB_MAX_SESSIONS` = `10` (each visitor is a Python process)
+3. Create a token at <https://huggingface.co/settings/tokens> with **write**
+   access, then push this repo to the Space:
+
+   ```bash
+   git remote add space https://huggingface.co/spaces/<user>/<space>
+   git push space main --force   # username: your HF user, password: the token
+   ```
+
+4. Watch the **Logs** tab until the build finishes, then open
+   `https://<user>-<space>.hf.space`.
+
+Free Spaces may sleep when idle and wake on the next visit. To update, push
+to `space` again.
 
 ## Port 22 trade-off: moving your real SSH
 
