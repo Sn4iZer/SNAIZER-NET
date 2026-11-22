@@ -30,7 +30,7 @@ def format_partial(value: str, fraction: float) -> str:
 
 
 class CounterStat(Static):
-    """Stat box: big value over a dim label, animated from zero on show."""
+    """Inline stat ("5 projects"); the number counts up from zero on show."""
 
     def __init__(self, value: str, label: str, *, classes: str | None = None) -> None:
         super().__init__(classes=classes)
@@ -63,4 +63,4 @@ class CounterStat(Static):
 
     def _draw(self, fraction: float) -> None:
         number = tint("cyan", format_partial(self.value, fraction), "bold")
-        self.update(f"{number}\n{tint('dim', self.label)}")
+        self.update(f"{number} {tint('dim', self.label)}")

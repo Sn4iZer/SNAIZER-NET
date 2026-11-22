@@ -5,14 +5,17 @@ from textual.binding import Binding
 from textual.containers import Horizontal, Vertical, VerticalScroll
 from textual.widgets import Button, Label, ListItem, ListView, Static
 
-from snaizer_net.assets.ascii import AVATAR, SKULL, TROPHY
+from snaizer_net.assets.ascii import SKULL, TROPHY
 from snaizer_net.config import ANIM_FPS
-from snaizer_net.content import Lore, Profile, Project
+from snaizer_net.content import Lore, Profile, Project, parse_period
 from snaizer_net.markup import safe, tint
 from snaizer_net.shell.commands import FakeShell
-from snaizer_net.timeline import KIND_COLOR, KIND_GLYPH, build_timeline
+from snaizer_net.timeline import KIND_COLOR, KIND_GLYPH, build_timeline, period_label
 from snaizer_net.widgets.counter import CounterStat
+from snaizer_net.widgets.decrypt_text import DecryptText
 from snaizer_net.widgets.fake_shell import FakeShellWidget
+from snaizer_net.widgets.glitch_label import GlitchBanner
+from snaizer_net.widgets.ledger import LedgerEntry
 from snaizer_net.widgets.motion import motion_enabled
 from snaizer_net.widgets.project_card import ProjectCard
 from snaizer_net.widgets.sensor_panel import SensorPanel
@@ -26,38 +29,74 @@ class Section(VerticalScroll, can_focus=False):
     DEFAULT_CLASSES = "section"
 
 
+def now_readout(profile: Profile) -> list[tuple[str, str]]:
+    """``(label, markup)`` rows: what Mohammed is studying, his last role, top award."""
+    rows: list[tuple[str, str]] = []
+    if profile.education:
+        edu = profile.education[0]
+        period = parse_period(edu.period)
+        label = "studying" if period and period.end is None else "graduated"
+        rows.append((label, f"{safe(edu.degree)}{tint('dim', ', ' + edu.institution)}"))
+    if profile.experience:
+        exp = profile.experience[0]
+        rows.append(
+            (
+                "last role",
+                f"{safe(exp.title)}{tint('dim', ', ' + exp.organization)} "
+                f"{tint('yellow', period_label(exp.period))}",
+            )
+        )
+    if profile.awards:
+        award = profile.awards[0]
+        rows.append(
+            (
+                "top award",
+                f"{safe(award.place)}{tint('dim', ', ' + award.title)} "
+                f"{tint('yellow', str(award.year))}",
+            )
+        )
+    return rows
+
+
 class ProfileSection(Section):
-    """Identity, typewriter bio and headline stats."""
+    """Handle as the hero, then name, bio, a "now" readout and the numbers."""
 
     def __init__(self, profile: Profile, *, id: str | None = None) -> None:
         super().__init__(id=id)
         self.profile = profile
 
     def compose(self) -> ComposeResult:
-        """Avatar + identity block, then stat boxes."""
+        """Hero, readout, counters and the simulated feed."""
         ident = self.profile.identity
-        with Horizontal(id="profile-top"):
-            yield Static("\n".join(AVATAR), classes="avatar")
-            with Vertical(id="profile-ident"):
-                yield Static(
-                    f"{tint('cyan', ident.name.upper(), 'bold')}  "
-                    f"{tint('magenta', '// ' + ident.handle, 'bold')}",
-                    classes="profile-name",
-                )
-                yield Static(
-                    f"{tint('yellow', ident.title)} {tint('dim', '·')} {safe(ident.location)}",
-                    classes="profile-title",
-                )
-                yield Typewriter(ident.bio, id="bio")
+        banner = GlitchBanner([[(ident.handle, "magenta")]], chance=0.0, id="profile-handle")
+        banner.compact = True
+        yield banner
+        yield Static(
+            f"{tint('text', ident.name, 'bold')}\n"
+            f"{tint('cyan', ident.title)}{tint('dim', ', ' + ident.location)}",
+            id="profile-name",
+        )
+        yield Typewriter(ident.bio, id="bio")
+        yield Static(
+            "\n".join(
+                f"{tint('dim', label.ljust(10))} {markup}"
+                for label, markup in now_readout(self.profile)
+            ),
+            id="profile-now",
+        )
         stats = [
-            ("AWARDS", str(len(self.profile.awards))),
-            ("PROJECTS", str(len(self.profile.projects))),
-            *((item.label, item.value) for item in self.profile.highlights),
+            (str(len(self.profile.projects)), "projects"),
+            (str(len(self.profile.awards)), "awards"),
+            *((item.value, item.label) for item in self.profile.highlights),
         ]
         with Horizontal(id="profile-stats"):
-            for label, value in stats:
-                yield CounterStat(value, label, classes="stat-box")
+            for value, label in stats:
+                yield CounterStat(value, label, classes="stat")
         yield SensorPanel(id="sensor-panel")
+
+    def on_show(self) -> None:
+        """A short glitch on the handle each time the profile opens."""
+        self.query_one(GlitchBanner).glitch(3)
 
 
 class TimelineSection(Section):
@@ -74,8 +113,7 @@ class TimelineSection(Section):
     def compose(self) -> ComposeResult:
         """Legend and the timeline body."""
         legend = "   ".join(
-            f"{tint(KIND_COLOR[kind], KIND_GLYPH[kind])} {tint('dim', kind.upper())}"
-            for kind in KIND_COLOR
+            f"{tint(KIND_COLOR[kind], KIND_GLYPH[kind])} {tint('dim', kind)}" for kind in KIND_COLOR
         )
         yield Static(legend, classes="caption")
         yield Static("", id="timeline-body")
@@ -113,30 +151,24 @@ class TimelineSection(Section):
             )
             last = index == len(self.entries) - 1
             lines.append(
-                f"{' ' * width}  {tint('dim', ' ' if last else '│')}   "
-                f"{tint('dim', entry.detail + ' · ' + entry.kind)}"
+                f"{' ' * width}  {tint('dim', ' ' if last else '│')}   {tint('dim', entry.detail)}"
             )
         self.query_one("#timeline-body", Static).update("\n".join(lines))
 
 
 class EducationSection(Section):
-    """Degrees as a timeline of cards."""
+    """Degrees as ledger rows."""
 
     def __init__(self, profile: Profile, *, id: str | None = None) -> None:
         super().__init__(id=id)
         self.profile = profile
 
     def compose(self) -> ComposeResult:
-        """One card per degree."""
+        """One row per degree."""
         for edu in self.profile.education:
-            card = Static(
-                f"{tint('cyan', edu.degree, 'bold')}\n"
-                f"{tint('magenta', '◆')} {safe(edu.institution)} {tint('dim', '·')} "
-                f"{safe(edu.location)}",
-                classes="card",
+            yield LedgerEntry(
+                period_label(edu.period), edu.degree, f"{edu.institution}, {edu.location}"
             )
-            card.border_title = edu.period
-            yield card
 
 
 class SkillsSection(Section):
@@ -147,24 +179,27 @@ class SkillsSection(Section):
         self.profile = profile
 
     def compose(self) -> ComposeResult:
-        """One panel per category."""
+        """A caption, then a heading and bars per category."""
         yield Static(
-            tint("dim", "bars show relative proficiency (stylized, not a certification)"),
+            tint("dim", "Bars show self-assessed, relative proficiency. Languages use CV levels."),
             classes="caption",
         )
-        for category in self.profile.skills:
-            panel = Vertical(
-                *(SkillBar(skill.name, skill.level) for skill in category.skills),
-                classes="panel",
+        groups = [
+            (category.name, [SkillBar(skill.name, skill.level) for skill in category.skills])
+            for category in self.profile.skills
+        ]
+        groups.append(
+            (
+                "Spoken languages",
+                [
+                    SkillBar(lang.name, lang.bar, label=lang.level)
+                    for lang in self.profile.languages
+                ],
             )
-            panel.border_title = category.name.upper()
-            yield panel
-        spoken = Vertical(
-            *(SkillBar(lang.name, lang.bar, label=lang.level) for lang in self.profile.languages),
-            classes="panel",
         )
-        spoken.border_title = "SPOKEN"
-        yield spoken
+        for name, bars in groups:
+            yield Static(tint("cyan", name, "bold"), classes="group-heading")
+            yield Vertical(*bars, classes="skill-group")
 
 
 class ProjectList(ListView):
@@ -224,11 +259,10 @@ class ProjectsSection(Horizontal):
         self._update_title()
 
     def _update_title(self) -> None:
-        label = self.active_filter or "ALL"
-        self.query_one(ProjectList).border_title = (
-            f"MISSIONS · {label} ({len(self.shown_projects)})"
-        )
-        self.query_one(ProjectList).border_subtitle = "f: filter"
+        label = f"tag: {self.active_filter}" if self.active_filter else "all"
+        project_list = self.query_one(ProjectList)
+        project_list.border_title = f"{label} ({len(self.shown_projects)})"
+        project_list.border_subtitle = "f filter"
 
     async def set_filter(self, tag: str | None, select: Project | None = None) -> None:
         """Show only projects tagged ``tag`` (``None`` = all), optionally selecting one."""
@@ -277,7 +311,7 @@ class ProjectsSection(Horizontal):
 
 
 class AwardsSection(Section):
-    """Trophy art plus one card per award."""
+    """Trophy art plus one card per award; the card frame encodes the placing."""
 
     def __init__(self, profile: Profile, *, id: str | None = None) -> None:
         super().__init__(id=id)
@@ -289,40 +323,33 @@ class AwardsSection(Section):
             yield Static("\n".join(TROPHY), classes="trophy")
             with Vertical(id="awards-cards"):
                 for award in self.profile.awards:
+                    rank = "-first" if award.place.lower().startswith("1st") else "-placed"
                     card = Static(
-                        f"{tint('yellow', '★ ' + award.place.upper(), 'bold')}\n"
-                        f"{tint('cyan', award.title, 'bold')}\n"
-                        f"{tint('magenta', award.organizer)} {tint('dim', '·')} "
-                        f"{tint('yellow', str(award.year))}\n"
+                        f"{tint('text', award.title, 'bold')}\n"
+                        f"{tint('dim', award.organizer)}\n"
                         f"{safe(award.description)}",
-                        classes="card",
+                        classes=f"award-card {rank}",
                     )
-                    card.border_title = str(award.year)
+                    card.border_title = f"★ {award.place}"
+                    card.border_subtitle = str(award.year)
                     yield card
 
 
 class ExperienceSection(Section):
-    """Work and entrepreneurship entries."""
+    """Work and entrepreneurship entries as ledger rows."""
 
     def __init__(self, profile: Profile, *, id: str | None = None) -> None:
         super().__init__(id=id)
         self.profile = profile
 
     def compose(self) -> ComposeResult:
-        """One card per entry."""
+        """One row per entry."""
         for exp in self.profile.experience:
-            bullets = "\n".join(f"{tint('green', '▸')} {safe(bullet)}" for bullet in exp.bullets)
-            card = Static(
-                f"{tint('cyan', exp.title, 'bold')} {tint('dim', '@')} "
-                f"{tint('magenta', exp.organization)}\n\n{bullets}",
-                classes="card",
-            )
-            card.border_title = exp.period
-            yield card
+            yield LedgerEntry(period_label(exp.period), exp.title, exp.organization, exp.bullets)
 
 
 class ContactSection(Section):
-    """Contact channels; link buttons only in the web build."""
+    """Contact channels, a sealed phone number and copy/open actions."""
 
     def __init__(self, profile: Profile, web: bool, *, id: str | None = None) -> None:
         super().__init__(id=id)
@@ -330,44 +357,74 @@ class ContactSection(Section):
         self.web = web
 
     def compose(self) -> ComposeResult:
-        """Contact lines and actions."""
+        """Label/value rows, then actions."""
         contact = self.profile.contact
-        link = "bold underline"
-        card = Static(
-            "\n".join(
-                [
-                    f"{tint('dim', 'EMAIL    ')} {tint('cyan', contact.email, link)}",
-                    f"{tint('dim', 'GITHUB   ')} {tint('cyan', contact.github_url, link)}",
-                    f"{tint('dim', 'LOCATION ')} {safe(contact.location)}",
-                ]
-            ),
-            classes="card contact-card",
-        )
-        card.border_title = "SECURE CHANNELS"
-        yield card
+        rows = [
+            ("email", tint("cyan", contact.email, "underline")),
+            ("github", tint("cyan", contact.github_url, "underline")),
+            ("location", safe(contact.location)),
+        ]
+        for label, value in rows:
+            with Horizontal(classes="contact-row"):
+                yield Static(tint("dim", label), classes="contact-label")
+                yield Static(value, classes="contact-value")
+        if contact.phone_sealed:
+            with Horizontal(classes="contact-row"):
+                yield Static(tint("dim", "phone"), classes="contact-label")
+                yield DecryptText(
+                    lambda: contact.phone or "",
+                    len(contact.phone or ""),
+                    id="phone",
+                    classes="contact-value",
+                )
         with Horizontal(id="contact-actions"):
-            yield Button("COPY EMAIL", id="copy-email", classes="neon-button")
-            yield Button("COPY GITHUB", id="copy-github", classes="neon-button")
+            if contact.phone_sealed:
+                yield Button("Decrypt phone", id="decrypt-phone", compact=True)
+            yield Button("Copy email", id="copy-email", compact=True)
+            yield Button("Copy GitHub link", id="copy-github", compact=True)
             if self.web:
-                yield Button("OPEN LINK: GITHUB", id="open-github", classes="neon-button")
-                yield Button("OPEN LINK: EMAIL", id="open-email", classes="neon-button")
+                yield Button("Open GitHub", id="open-github", compact=True)
+                yield Button("Write an email", id="open-email", compact=True)
         if not self.web:
             yield Static(
-                tint("dim", "Clickable links are available in the web build."), classes="caption"
+                tint("dim", "In the browser version you can also open GitHub or start an email."),
+                classes="caption",
             )
 
+    def decrypt_phone(self) -> None:
+        """Decode the phone number in place, then offer to copy it."""
+        phone = self.query("#phone").results(DecryptText)
+        target = next(iter(phone), None)
+        if target is None or target.revealed or target.decoding:
+            return
+
+        def done() -> None:
+            button = self.query_one("#decrypt-phone", Button)
+            button.label = "Copy phone"
+            self.notify("Phone decrypted", title="contact")
+
+        target.reveal(done)
+
     def on_button_pressed(self, event: Button.Pressed) -> None:
-        """Copy or open contact links."""
+        """Decrypt, copy or open contact details."""
         contact = self.profile.contact
-        if event.button.id == "copy-email":
+        button = event.button.id
+        if button == "decrypt-phone":
+            phone = self.query_one("#phone", DecryptText)
+            if phone.revealed:
+                self.app.copy_to_clipboard(phone.plain)
+                self.notify("Phone copied", title="contact")
+            else:
+                self.decrypt_phone()
+        elif button == "copy-email":
             self.app.copy_to_clipboard(contact.email)
-            self.notify("email copied to clipboard", title="UPLINK")
-        elif event.button.id == "copy-github":
+            self.notify("Email copied", title="contact")
+        elif button == "copy-github":
             self.app.copy_to_clipboard(contact.github_url)
-            self.notify("GitHub URL copied to clipboard", title="UPLINK")
-        elif event.button.id == "open-github" and self.web:
+            self.notify("GitHub link copied", title="contact")
+        elif button == "open-github" and self.web:
             self.app.open_url(contact.github_url)
-        elif event.button.id == "open-email" and self.web:
+        elif button == "open-email" and self.web:
             self.app.open_url(contact.mailto_url)
 
 
@@ -398,5 +455,5 @@ class BlackIceSection(Section):
         yield Static(tint("danger", self.lore.blackice_title, "bold"), classes="blackice-title")
         yield Static(
             "\n".join(tint("green", line) for line in self.lore.blackice_body),
-            classes="card blackice-body",
+            classes="blackice-body",
         )

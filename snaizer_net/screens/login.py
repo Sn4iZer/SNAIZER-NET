@@ -44,7 +44,14 @@ class LoginScreen(Screen[None]):
                 yield Input(placeholder="••••••", password=True, max_length=64, id="login-pass")
                 yield Static("", id="login-status")
                 yield Static(
-                    tint("dim", "ENTER jack in  ·  TAB switch field  ·  ctrl+c abort"),
+                    "   ".join(
+                        f"{tint('cyan', key, 'bold')} {tint('dim', action)}"
+                        for key, action in (
+                            ("ENTER", "jack in"),
+                            ("TAB", "switch field"),
+                            ("ctrl+c", "abort"),
+                        )
+                    ),
                     id="login-help",
                 )
             yield HexStream(id="decrypt")

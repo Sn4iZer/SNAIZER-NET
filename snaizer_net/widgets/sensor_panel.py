@@ -40,8 +40,7 @@ class SensorPanel(Vertical):
 
     def __init__(self, *, id: str | None = None, seed: int | None = None) -> None:
         super().__init__(id=id)
-        self.border_title = "SIMULATED IoT FEED"
-        self.border_subtitle = "demo data, not real telemetry"
+        self.border_title = "Simulated IoT feed (demo data, not real telemetry)"
         self._rng = random.Random(seed)
         self.series: dict[str, deque[float]] = {}
         for spec in SENSORS:

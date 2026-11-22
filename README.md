@@ -48,12 +48,17 @@ Every visit opens with a boot sequence and a **fake** "neural-link" login
   sidebar navigation that collapses into a tab strip under 100 columns,
   context-aware key hints, a neon scanline sweep on every section change and
   a slow neon "pulse" on the active item.
-- **Sections**:
-  - profile: typewriter bio, stat counters that count up, and a clearly
+- **Sections** (each headed by its path, e.g. `~/experience`, and one plain
+  sentence on what it is):
+  - profile: the handle in block type, typewriter bio, a "now" readout
+    (studying, last role, top award), counters that count up, and a clearly
     labelled **simulated IoT telemetry** panel with live sparklines;
-  - education and animated skill bars;
+  - education and experience as a ledger: dates in their own column;
+  - animated skill bars;
   - project "dossiers" (Enter expands, `f` filters by tag);
-  - awards, experience and contact;
+  - awards (the frame encodes the placing);
+  - contact, with the phone number **sealed** until you press `d` (or run
+    `decrypt phone`), which decodes it character by character;
   - a **timeline** that merges degrees, jobs, projects and awards into one
     animated career log;
   - a sandboxed **fake shell**.
@@ -61,6 +66,7 @@ Every visit opens with a boot sequence and a **fake** "neural-link" login
   filters, themes and actions (including turning animations on/off).
 - **Fake shell commands**: `help`, `whoami`, `ls`, `cd`, `pwd`, `cat`,
   `echo`, `grep`, `projects`, `open <n>`, `timeline`, `skills`, `contact`,
+  `decrypt phone`,
   `neofetch`, `fortune`, `hack`, `history`, `matrix`, `theme`, `clear`,
   `exit` (and try `sudo`). Output streams in line by line.
 - **Themes**: `neon-night` (default), `synthwave`, `toxic-green`,
@@ -109,9 +115,16 @@ HOST=127.0.0.1 PORT=9000 python servers/web.py
 
 Each browser tab gets its own app process (via `textual-serve`). Keyboard
 and mouse both work. Web mode sets `SNAIZER_MODE=web`, which adds
-**OPEN LINK** buttons to the contact section. Behind a reverse proxy the
-public `wss://` URL is worked out from `X-Forwarded-Proto/Host`. Set
-`PUBLIC_URL` to pin it.
+"Open GitHub" and "Write an email" buttons to the contact section. Behind a
+reverse proxy the public `wss://` URL is worked out from
+`X-Forwarded-Proto/Host`. Set `PUBLIC_URL` to pin it.
+
+The page uses [Martian Mono](https://github.com/evilmartians/mono) (OFL,
+served locally from `servers/web_static/fonts`, no Google Fonts request). On
+small screens it picks a font size that fits the 80x24 layout; add
+`?fontsize=14` to the URL to override. The connecting and disconnected
+screens show the `ssh` command too (set `SSH_PUBLIC_PORT` if you moved the
+gateway to port 22).
 
 ## SSH mode
 
@@ -138,9 +151,26 @@ live, and pressing `q` ends the session cleanly. Logs are JSON lines on stdout:
 No widget hardcodes any of it. Edit the YAML and restart. There is no build step.
 
 - `identity`: name, handle, title, location, bio.
-- `contact`: email, GitHub handle, location.
-- `highlights`: extra headline stats on the profile screen (AWARDS and
-  PROJECTS are counted automatically).
+- `contact`: email, GitHub handle, location, and an optional `phone_sealed`.
+- `highlights`: extra headline stats on the profile screen (projects and
+  awards are counted automatically).
+
+### The sealed phone number
+
+The phone number never sits in plain text. Seal it and paste the token into
+`contact.phone_sealed`:
+
+```bash
+python -m snaizer_net.cipher "+212 600 000 000"
+# snz1:...
+```
+
+Visitors see block noise until they press `d` in the contact section (or run
+`decrypt phone` in the terminal). Be clear about what this is: **obfuscation,
+not encryption**. Anyone with this code can decode the token. It keeps the
+number out of your repository and away from scrapers that grep for digits;
+the deliberate "decrypt" action is the real gate. Remove the field to hide
+the number entirely.
 - `education`, `skills` (with a stylized 0-100 `level`), `languages` (the
   `level` text is shown as-is, `bar` only drives the visual), `projects`
   (`slug` must be kebab-case and unique), `awards`, `experience`.
@@ -368,7 +398,8 @@ snaizer-net/
 │   ├── themes.py          palettes → Textual themes
 │   ├── content.py         YAML loading + validation
 │   ├── auth_theater.py    pure fake-login rules
-│   ├── timeline.py        merged, sorted career log
+│   ├── timeline.py        merged, sorted career log + period labels
+│   ├── cipher.py          seals/unseals the phone number (obfuscation)
 │   ├── palette.py         command palette provider
 │   ├── config.py · markup.py · navigation.py
 │   ├── screens/           boot · login · main · overlays (help/matrix/too-small)
@@ -376,9 +407,10 @@ snaizer-net/
 │   ├── shell/             sandboxed fake shell (commands, vfs, tokenizer)
 │   ├── widgets/           matrix_rain · glitch_label · skill_bar · typewriter
 │   │                      fake_shell · project_card · hex_stream · nav · status_bar
-│   │                      counter · sensor_panel · scanline
+│   │                      counter · sensor_panel · scanline · ledger · decrypt_text
 │   └── assets/ascii.py    block font + ASCII art
 ├── servers/               web.py · ssh_server.py · pty_bridge.py · limits.py · healthcheck.py
+│                          web_templates/ (page) · web_static/fonts/ (Martian Mono, OFL)
 ├── tests/
 ├── Dockerfile · docker-compose.yml · .env.example
 └── deploy/                Caddyfile · snaizer.service · snaizer-ssh.service

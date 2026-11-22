@@ -13,15 +13,15 @@ from snaizer_net.widgets.nav import NavItem
 from snaizer_net.widgets.project_card import ProjectCard
 
 EXPECTED = {
-    "profile": ["MOHAMMED TCHICHI", "Sn4iZer", "AWARDS", "PROJECTS", "50,000+"],
-    "education": ["Master's in Artificial Intelligence & IoT", "B.Sc. Artificial Intelligence"],
-    "skills": ["Python (OOP)", "relative proficiency", "LANGUAGES"],
+    "profile": ["Mohammed Tchichi", "Master's student in AI & IoT", "projects", "50,000+"],
+    "education": ["Master d'Excellence in Artificial", "B.Sc. Artificial Intelligence"],
+    "skills": ["Python (OOP)", "relative proficiency", "Programming"],
     "projects": ["Data-Driven Pentesting Framework", "CLASSIFIED", "Currency Converter"],
-    "awards": ["1ST PLACE", "Innovation Camp", "3RD PLACE", "ENSA Kenitra"],
-    "experience": ["Sport Leader", "Decathlon Kenitra", "Advised customers"],
+    "awards": ["1st Place", "Innovation Camp", "3rd Place", "ENSA Kenitra"],
+    "experience": ["Sales Advisor", "Decathlon, Kenitra", "Freelance IT Customer Support"],
     "contact": ["mohammedtchichi03@gmail.com", "https://github.com/Sn4iZer"],
     "terminal": ["simulated node"],
-    "timeline": ["Jun-Jul 2026", "Sport Leader", "2026-2028"],
+    "timeline": ["Jun–Jul 2026", "Sales Advisor", "2026–present"],
 }
 
 
@@ -130,7 +130,7 @@ async def test_non_admin_has_no_blackice(make_app):
         await pilot.pause(0.1)
         await pilot.press("0")
         assert app.screen.current == "profile"
-        assert "BLACK-ICE" not in screen_text(app)
+        assert "black-ice" not in screen_text(app)
 
 
 async def test_keyboard_navigation(make_app):
@@ -263,7 +263,7 @@ async def test_contact_buttons_depend_on_mode(make_app):
     async with local.run_test(size=(120, 40)) as pilot:
         await pilot.pause(0.1)
         ids = {b.id for b in local.screen.query(Button)}
-        assert ids == {"copy-email", "copy-github"}
+        assert ids == {"decrypt-phone", "copy-email", "copy-github"}
 
     web = make_app(skip_intro=True, mode="web")
     async with web.run_test(size=(120, 40)) as pilot:

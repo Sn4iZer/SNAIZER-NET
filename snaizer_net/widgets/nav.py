@@ -7,7 +7,7 @@ from textual.containers import Horizontal, Vertical
 from textual.message import Message
 from textual.widgets import Static
 
-from snaizer_net.markup import safe
+from snaizer_net.markup import safe, tint
 from snaizer_net.navigation import SectionSpec
 
 
@@ -22,7 +22,7 @@ class NavItem(Static):
             self.section_id = section_id
 
     def __init__(self, spec: SectionSpec, compact: bool) -> None:
-        label = f"{spec.key}:{spec.short}" if compact else f"[{spec.key}] {spec.title}"
+        label = f"{spec.key}:{spec.short}" if compact else f"{spec.key}  {spec.title}"
         super().__init__(safe(label), classes="nav-item")
         self.spec = spec
         if spec.admin_only:
@@ -41,17 +41,25 @@ def _mark_active(items: Sequence[NavItem], section_id: str) -> None:
 class Sidebar(Vertical):
     """Vertical navigation menu."""
 
-    def __init__(self, sections: Sequence[SectionSpec], *, id: str | None = None) -> None:
+    def __init__(
+        self, sections: Sequence[SectionSpec], hostname: str, *, id: str | None = None
+    ) -> None:
         super().__init__(id=id)
         self.sections = sections
+        self.hostname = hostname
 
     def compose(self) -> ComposeResult:
-        """Header, one item per section, then a footer note."""
-        yield Static("░▒▓ NAV ▓▒░", classes="nav-header")
+        """Node name, one item per section, then a key legend."""
+        yield Static(
+            tint("magenta", "◢◤ ", "bold") + tint("magenta", self.hostname, "bold"),
+            classes="nav-header",
+        )
         for spec in self.sections:
             yield NavItem(spec, compact=False)
         yield Static("", classes="nav-spacer")
-        yield Static("/  search\nm  matrix\n?  help\nq  quit", classes="nav-footer")
+        legend = [("/", "search"), ("m", "matrix"), ("?", "help"), ("q", "quit")]
+        lines = (f"{tint('cyan', key, 'bold')}  {tint('dim', label)}" for key, label in legend)
+        yield Static("\n".join(lines), classes="nav-footer")
 
     def set_active(self, section_id: str) -> None:
         """Highlight the current section."""

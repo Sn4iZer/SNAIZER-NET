@@ -13,6 +13,8 @@ from typing import Any, TypeVar
 
 import yaml
 
+from snaizer_net.cipher import CipherError, unseal
+
 PERIOD_RE = re.compile(
     r"^(?:(?P<sm>[A-Za-z]{3})\s+)?(?P<sy>\d{4})"
     r"(?:\s*-\s*(?:(?P<em>[A-Za-z]{3})\s+)?(?P<ey>\d{4}|present))?$"
@@ -75,6 +77,13 @@ class Contact:
     email: str
     github: str
     location: str
+    phone_sealed: str | None = None
+    """Phone number sealed with :mod:`snaizer_net.cipher`; revealed on demand."""
+
+    @property
+    def phone(self) -> str | None:
+        """The unsealed phone number (only call when the visitor asks for it)."""
+        return unseal(self.phone_sealed) if self.phone_sealed else None
 
     @property
     def github_url(self) -> str:
@@ -312,10 +321,18 @@ def parse_profile(data: Mapping[str, Any], source: str = "profile.yaml") -> Prof
     email = _get(cont, "email", str, where)
     if "@" not in email:
         raise ContentError(f"{where}.email: '{email}' is not an email address")
+    phone_sealed = None
+    if cont.get("phone_sealed") is not None:
+        phone_sealed = _get(cont, "phone_sealed", str, where)
+        try:
+            unseal(phone_sealed)
+        except CipherError as error:
+            raise ContentError(f"{where}.phone_sealed: {error}") from error
     contact = Contact(
         email=email,
         github=_get(cont, "github", str, where),
         location=_get(cont, "location", str, where),
+        phone_sealed=phone_sealed,
     )
 
     highlights = tuple(

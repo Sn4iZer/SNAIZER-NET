@@ -3,7 +3,7 @@ import re
 
 from aiohttp.test_utils import TestClient, TestServer
 
-from servers.web import STATICS, TEMPLATES, SnaizerWebServer, build_command
+from servers.web import STATICS, TEMPLATES, SnaizerWebServer, build_command, ssh_command
 
 
 def make_server(**kwargs) -> SnaizerWebServer:
@@ -42,6 +42,22 @@ async def test_public_url_overrides_request():
     async with TestClient(TestServer(await server._make_app())) as client:
         html = await (await client.get("/")).text()
     assert "wss://fixed.example/ws" in html
+
+
+def test_ssh_command():
+    assert ssh_command("https://snaizer.example:443", 2222) == "ssh -p 2222 guest@snaizer.example"
+    assert ssh_command("https://snaizer.example", 22) == "ssh guest@snaizer.example"
+
+
+async def test_page_uses_local_font_and_ssh_hint():
+    server = make_server(public_url="https://snaizer.example", ssh_port=22)
+    async with TestClient(TestServer(await server._make_app())) as client:
+        html = await (await client.get("/")).text()
+        font = await client.get("/assets/fonts/MartianMono.ttf")
+    assert "fonts.googleapis.com" not in html
+    assert "/assets/fonts/MartianMono.ttf" in html
+    assert "ssh guest@snaizer.example" in html
+    assert font.status == 200
 
 
 async def test_session_cap_returns_503():

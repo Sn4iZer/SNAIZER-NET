@@ -8,28 +8,29 @@ from snaizer_net.markup import safe, tint
 COLLAPSED_BULLETS = 2
 
 
-def dossier_markup(project: Project, index: int, expanded: bool) -> str:
+def dossier_stamp(project: Project, index: int) -> str:
+    """The classified stamp shown in the dossier frame's top edge."""
+    return f"▓▒░ CLASSIFIED // CASE FILE #{index:02d} // {project.year} ░▒▓"
+
+
+def dossier_markup(project: Project, expanded: bool) -> str:
     """Markup for a project dossier; collapsed shows only the first bullets."""
     bullets = project.bullets if expanded else project.bullets[:COLLAPSED_BULLETS]
     hidden = len(project.bullets) - len(bullets)
     lines = [
-        tint("danger", f"▓▒░ CLASSIFIED // CASE FILE #{index:02d} // {project.year} ░▒▓", "bold"),
+        tint("cyan", project.title, "bold"),
+        tint("dim", project.kind),
         "",
-        tint("cyan", project.title.upper(), "bold"),
-        f"{tint('magenta', project.kind)}  {tint('dim', '·')}  {tint('yellow', str(project.year))}",
-        tint("dim", "─" * 40),
         safe(project.summary),
         "",
-        *(f"{tint('green', '▸')} {safe(bullet)}" for bullet in bullets),
+        *(f"{tint('cyan', '▸')} {safe(bullet)}" for bullet in bullets),
     ]
     if hidden:
-        lines.append(tint("dim", f"  … {hidden} more line(s) redacted. [ENTER] declassify"))
+        noun = "line" if hidden == 1 else "lines"
+        lines.append(tint("danger", f"▓▓▓ {hidden} more {noun} redacted. Enter declassifies."))
     lines += [
         "",
-        tint("dim", "TAGS ")
-        + " ".join(f"[$neon-bg on $neon-cyan] {safe(tag)} [/]" for tag in project.tags),
-        "",
-        tint("dim", "[ENTER] collapse dossier" if expanded else "[ENTER] expand dossier"),
+        " ".join(f"[$neon-cyan on $neon-panel] {safe(tag)} [/]" for tag in project.tags),
     ]
     return "\n".join(lines)
 
@@ -50,8 +51,9 @@ class ProjectCard(Static):
     def show(self, project: Project, index: int, expanded: bool = False) -> None:
         """Display ``project`` (1-based ``index``)."""
         self.project, self.index, self.expanded = project, index, expanded
-        self.border_title = f"DOSSIER {index:02d}"
-        self.update(dossier_markup(project, index, expanded))
+        self.border_title = dossier_stamp(project, index)
+        self.border_subtitle = "Enter collapses" if expanded else "Enter expands"
+        self.update(dossier_markup(project, expanded))
 
     def toggle(self) -> None:
         """Expand or collapse the current dossier."""

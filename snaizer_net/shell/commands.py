@@ -107,6 +107,7 @@ class FakeShell:
             "timeline": Command(self._timeline, "timeline", "chronological career log"),
             "skills": Command(self._skills, "skills", "show skill matrix"),
             "contact": Command(self._contact, "contact", "show contact channels"),
+            "decrypt": Command(self._decrypt, "decrypt phone", "reveal the sealed phone number"),
             "neofetch": Command(self._neofetch, "neofetch", "system info, runner style"),
             "fortune": Command(self._fortune, "fortune", "a byte of runner wisdom"),
             "hack": Command(self._hack, "hack", "totally real intrusion (fiction)"),
@@ -259,10 +260,32 @@ class FakeShell:
 
     def _contact(self, args: list[str]) -> ShellResult:
         contact = self.profile.contact
-        return _out(
+        lines = [
             f"{tint('dim', 'email   ')} {tint('cyan', contact.email)}",
             f"{tint('dim', 'github  ')} {tint('cyan', contact.github_url)}",
             f"{tint('dim', 'location')} {safe(contact.location)}",
+        ]
+        if contact.phone_sealed:
+            lines.append(
+                f"{tint('dim', 'phone   ')} {tint('magenta', '▓▒░ sealed')} "
+                f"{tint('dim', '(run: decrypt phone)')}"
+            )
+        return _out(*lines)
+
+    def _decrypt(self, args: list[str]) -> ShellResult:
+        phone = self.profile.contact.phone
+        if not args or args[0].lower() != "phone":
+            return _out(tint("yellow", "usage: decrypt phone"))
+        if phone is None:
+            return _out(tint("dim", "decrypt: no sealed phone number on this node."))
+        return ShellResult(
+            (
+                tint("dim", "▓▒░ reading sealed field contact.phone"),
+                tint("dim", "▓▒░ applying keystream"),
+                tint("dim", "▓▒░ checksum ok"),
+                f"{tint('dim', 'phone')} {tint('green', phone, 'bold')}",
+            ),
+            pace=1,
         )
 
     def _neofetch(self, args: list[str]) -> ShellResult:

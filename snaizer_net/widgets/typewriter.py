@@ -1,16 +1,14 @@
 """Text that types itself out, with a block cursor."""
 
-from textual.widget import Widget
+from textual.widgets import Static
 
 from snaizer_net.config import ANIM_FPS
 from snaizer_net.markup import safe, tint
 from snaizer_net.widgets.motion import motion_enabled
 
 
-class Typewriter(Widget):
+class Typewriter(Static):
     """Reveal ``text`` progressively the first time the widget is shown."""
-
-    DEFAULT_CSS = "Typewriter { height: auto; }"
 
     def __init__(
         self,
@@ -31,6 +29,10 @@ class Typewriter(Widget):
         """True once the whole text is visible."""
         return self.shown >= len(self.text)
 
+    def on_mount(self) -> None:
+        """Draw the cursor alone until typing starts."""
+        self._draw()
+
     def on_show(self) -> None:
         """Start typing on first display (instantly when animations are off)."""
         if self._started:
@@ -38,7 +40,8 @@ class Typewriter(Widget):
         self._started = True
         if not motion_enabled(self):
             self.shown = len(self.text)
-            self.refresh(layout=True)
+            # Show fires mid-layout; drawing now would keep the 1-line height.
+            self.call_after_refresh(self._draw)
             return
 
         def advance() -> None:
@@ -46,10 +49,9 @@ class Typewriter(Widget):
             if self.done or not motion_enabled(self):
                 self.shown = len(self.text)
                 timer.stop()
-            self.refresh(layout=True)
+            self._draw()
 
         timer = self.set_interval(1 / ANIM_FPS, advance)
 
-    def render(self) -> str:
-        """Visible text followed by the cursor."""
-        return safe(self.text[: self.shown]) + tint("magenta", "▌")
+    def _draw(self) -> None:
+        self.update(safe(self.text[: self.shown]) + tint("magenta", "▌"))

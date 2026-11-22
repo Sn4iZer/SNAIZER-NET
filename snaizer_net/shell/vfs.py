@@ -82,6 +82,7 @@ def build_vfs(profile: Profile, lore: Lore, admin: bool = False) -> VirtualFS:
                 f"email:    {contact.email}",
                 f"github:   {contact.github_url}",
                 f"location: {contact.location}",
+                *(["phone:    [sealed] run 'decrypt phone'"] if contact.phone_sealed else []),
             ]
         ),
         f"{HOME}/education.txt": "\n".join(

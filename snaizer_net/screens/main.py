@@ -6,10 +6,11 @@ from textual.binding import Binding
 from textual.containers import Horizontal, Vertical
 from textual.screen import Screen
 from textual.widget import Widget
-from textual.widgets import ContentSwitcher
+from textual.widgets import ContentSwitcher, Static
 
 from snaizer_net.config import NARROW_WIDTH
 from snaizer_net.content import Lore, Profile
+from snaizer_net.markup import tint
 from snaizer_net.navigation import SECTIONS, visible_sections
 from snaizer_net.screens._app import snaizer_app
 from snaizer_net.screens.overlays import HelpScreen, MatrixScreen
@@ -45,6 +46,7 @@ class MainScreen(Screen[None]):
         Binding("pagedown", "scroll_section(1)", "scroll down", show=False),
         Binding("pageup", "scroll_section(-1)", "scroll up", show=False),
         Binding("m", "matrix", "matrix", show=False),
+        Binding("d", "decrypt_phone", "decrypt phone", show=False),
         Binding("slash", "app.command_palette", "search", show=False),
         Binding("question_mark", "help", "help", show=False),
         Binding("q", "quit", "quit", show=False),
@@ -74,9 +76,13 @@ class MainScreen(Screen[None]):
         yield StatusBar(self.user, self.admin, app.config.mode, id="status")
         yield TabStrip(self.sections, id="tabstrip")
         with Horizontal(id="body"):
-            yield Sidebar(self.sections, id="sidebar")
+            yield Sidebar(self.sections, self.lore.hostname, id="sidebar")
             with Vertical(id="pane"):
-                yield GlitchLabel("", id="section-title")
+                with Vertical(id="section-head"):
+                    yield GlitchLabel(
+                        "", prefix=tint("magenta", "◢◤ ", "bold"), chance=0.0, id="section-title"
+                    )
+                    yield Static("", id="section-blurb")
                 with ContentSwitcher(initial=self.current, id="switcher"):
                     yield ProfileSection(self.profile, id="profile")
                     yield EducationSection(self.profile, id="education")
@@ -121,9 +127,11 @@ class MainScreen(Screen[None]):
             self.query_one(ScanLine).sweep()
         self.current = section_id
         self.query_one(ContentSwitcher).current = section_id
-        self.query_one("#section-title", GlitchLabel).set_text(
-            f"▓▒░ [{spec.key}] {spec.title} ░▒▓", glitch=True
-        )
+        self.query_one("#section-title", GlitchLabel).set_text(spec.path, glitch=True)
+        blurb = spec.blurb
+        if spec.id == "contact" and self.profile.contact.phone_sealed is None:
+            blurb = "Email and GitHub."
+        self.query_one("#section-blurb", Static).update(tint("dim", blurb))
         self.query_one(Sidebar).set_active(section_id)
         self.query_one(TabStrip).set_active(section_id)
         self.query_one(KeyHints).set_context(section_id)
@@ -160,6 +168,13 @@ class MainScreen(Screen[None]):
         """Jump to PROJECTS and expand the dossier ``slug``."""
         self.show_section("projects")
         self.call_later(self.query_one(ProjectsSection).open_project, slug)
+
+    def action_decrypt_phone(self) -> None:
+        """``d`` decrypts the sealed phone number (jumping to contact first)."""
+        if self.profile.contact.phone_sealed is None:
+            return
+        self.show_section("contact")
+        self.query_one(ContactSection).decrypt_phone()
 
     def filter_projects(self, tag: str | None) -> None:
         """Jump to PROJECTS filtered by ``tag`` (``None`` = all)."""

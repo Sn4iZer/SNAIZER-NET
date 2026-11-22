@@ -6,13 +6,12 @@ from snaizer_net.config import ANIM_FPS
 from snaizer_net.markup import safe, tint
 from snaizer_net.widgets.motion import motion_enabled
 
-PARTIALS = " ░▒▓"
 FILL_SECONDS = 0.8
 MAX_BAR = 60
 
 
 class SkillBar(Widget):
-    """``Python (OOP)   ██████████████▓·····  90%``, filling up when shown."""
+    """``Python (OOP)   ━━━━━━━━━━━━━━╸─────  90%``, filling up when shown."""
 
     DEFAULT_CSS = "SkillBar { height: 1; width: 1fr; }"
 
@@ -58,13 +57,12 @@ class SkillBar(Widget):
             self.title if len(self.title) <= title_width else self.title[: title_width - 1] + "…"
         )
         bar_width = max(4, min(MAX_BAR, self.size.width - title_width - len(self.label) - 2))
-        filled = self.value / 100 * bar_width
-        full = int(filled)
-        remainder = int((filled - full) * len(PARTIALS))
-        partial = PARTIALS[remainder] if remainder and full < bar_width else ""
-        empty = bar_width - full - len(partial)
+        full = min(bar_width, round(self.value / 100 * bar_width))
+        head = "╸" if 0 < full < bar_width else ""
+        body = max(0, full - len(head))
+        empty = bar_width - body - len(head)
         return (
             f"{safe(title.ljust(title_width))} "
-            f"{tint('cyan', '█' * full)}{tint('magenta', partial)}{tint('dim', '·' * empty)} "
+            f"{tint('cyan', '━' * body)}{tint('magenta', head, 'bold')}{tint('dim', '─' * empty)} "
             f"{tint('yellow', self.label, 'bold')}"
         )

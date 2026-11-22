@@ -29,14 +29,30 @@ class TimelineEntry:
     sort_key: tuple[int, int, int]
 
 
-def short_when(text: str, period: Period) -> str:
-    """Compact label: ``Jun 2026 - Jul 2026`` becomes ``Jun-Jul 2026``."""
+def _point(year: int, month: int) -> str:
+    return f"{MONTH_NAMES[month]} {year}" if month else str(year)
+
+
+def format_period(period: Period) -> str:
+    """Compact, typographic label.
+
+    ``Jun 2026 - Jul 2026`` -> ``Jun–Jul 2026``; ``2023-2025`` -> ``2023–2025``;
+    ``2026-present`` -> ``2026–present``; ``2024`` -> ``2024``.
+    """
     (start_year, start_month), end = period.start, period.end
-    if end and start_month and end[1] and start_year == end[0]:
-        if start_month == end[1]:
-            return f"{MONTH_NAMES[start_month]} {start_year}"
-        return f"{MONTH_NAMES[start_month]}-{MONTH_NAMES[end[1]]} {start_year}"
-    return text
+    if end is None:
+        return f"{_point(start_year, start_month)}–present"
+    if end == period.start:
+        return _point(start_year, start_month)
+    if start_month and end[1] and start_year == end[0]:
+        return f"{MONTH_NAMES[start_month]}–{MONTH_NAMES[end[1]]} {start_year}"
+    return f"{_point(start_year, start_month)}–{_point(*end)}"
+
+
+def period_label(text: str) -> str:
+    """:func:`format_period` for a raw period string (unchanged if unparsable)."""
+    period = parse_period(text)
+    return format_period(period) if period else text
 
 
 def build_timeline(profile: Profile) -> list[TimelineEntry]:
@@ -50,12 +66,11 @@ def build_timeline(profile: Profile) -> list[TimelineEntry]:
         period = parse_period(edu.period)
         if period:
             where = f"{edu.institution}, {edu.location}"
-            add(short_when(edu.period, period), "education", edu.degree, where, period.start)
+            add(format_period(period), "education", edu.degree, where, period.start)
     for exp in profile.experience:
         period = parse_period(exp.period)
         if period:
-            when = short_when(exp.period, period)
-            add(when, "experience", exp.title, exp.organization, period.start)
+            add(format_period(period), "experience", exp.title, exp.organization, period.start)
     for project in profile.projects:
         add(str(project.year), "project", project.title, project.kind, (project.year, 0))
     for award in profile.awards:

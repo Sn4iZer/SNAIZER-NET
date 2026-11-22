@@ -11,20 +11,38 @@ class SectionSpec:
     id: str
     title: str
     short: str
+    blurb: str
+    """One plain sentence under the heading: what this is and how to use it."""
     admin_only: bool = False
+
+    @property
+    def path(self) -> str:
+        """The section as a directory on the node, e.g. ``~/projects``."""
+        return f"~/{self.id}"
 
 
 SECTIONS: tuple[SectionSpec, ...] = (
-    SectionSpec("1", "profile", "PROFILE", "PROF"),
-    SectionSpec("2", "education", "EDUCATION", "EDU"),
-    SectionSpec("3", "skills", "SKILLS", "SKL"),
-    SectionSpec("4", "projects", "PROJECTS", "PROJ"),
-    SectionSpec("5", "awards", "AWARDS", "AWD"),
-    SectionSpec("6", "experience", "EXPERIENCE", "EXP"),
-    SectionSpec("7", "contact", "CONTACT", "CTC"),
-    SectionSpec("8", "terminal", "TERMINAL", "TERM"),
-    SectionSpec("9", "timeline", "TIMELINE", "TIME"),
-    SectionSpec("0", "blackice", "BLACK-ICE", "ICE", admin_only=True),
+    SectionSpec("1", "profile", "profile", "prof", "Who I am and what I'm working on now."),
+    SectionSpec("2", "education", "education", "edu", "Degrees, newest first."),
+    SectionSpec("3", "skills", "skills", "skl", "Tools and languages I work with."),
+    SectionSpec("4", "projects", "projects", "proj", "Enter opens a case file, f filters by tag."),
+    SectionSpec("5", "awards", "awards", "awd", "Competition results."),
+    SectionSpec("6", "experience", "experience", "exp", "Jobs and ventures, newest first."),
+    SectionSpec(
+        "7", "contact", "contact", "ctc", "Email and GitHub are open. Press d to decrypt the phone."
+    ),
+    SectionSpec(
+        "8", "terminal", "terminal", "term", "A sandboxed shell over this portfolio. Try help."
+    ),
+    SectionSpec("9", "timeline", "timeline", "time", "Everything on one axis, newest first."),
+    SectionSpec(
+        "0",
+        "blackice",
+        "black-ice",
+        "ice",
+        "Fiction, for whoever typed the right name at the gate.",
+        admin_only=True,
+    ),
 )
 
 

@@ -25,6 +25,7 @@ class GlitchLabel(Static):
         text: str,
         *,
         color: str = "cyan",
+        prefix: str = "",
         chance: float = 0.02,
         id: str | None = None,
         classes: str | None = None,
@@ -32,6 +33,8 @@ class GlitchLabel(Static):
         super().__init__(id=id, classes=classes)
         self.text = text
         self.color = color
+        self.prefix = prefix
+        """Markup drawn before the text; never glitched."""
         self.chance = chance
         self._frames_left = 0
         self._rng = random.Random()
@@ -56,7 +59,7 @@ class GlitchLabel(Static):
             self.update(self._glitched())
 
     def _clean(self) -> str:
-        return tint(self.color, self.text, "bold")
+        return self.prefix + tint(self.color, self.text, "bold")
 
     def _glitched(self) -> str:
         chars = list(self.text)
@@ -67,7 +70,7 @@ class GlitchLabel(Static):
         shift = " " * self._rng.randint(0, 2)
         left, right = "".join(chars[:split]), "".join(chars[split:])
         a, b = self._rng.sample(SPLIT_COLORS, 2)
-        return f"{shift}{tint(a, left, 'bold')}{tint(b, right, 'bold')}"
+        return f"{self.prefix}{shift}{tint(a, left, 'bold')}{tint(b, right, 'bold')}"
 
     def _tick(self) -> None:
         if not motion_enabled(self) or not self.display:

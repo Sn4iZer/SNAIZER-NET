@@ -1,15 +1,19 @@
 /* SNAIZER//NET theme.
  * Colors come only from $neon-* variables (see themes.py), so swapping the
  * Textual theme swaps the whole palette live.
+ *
+ * Layering: chrome (status, sidebar, hints) = $neon-panel, content = $neon-bg.
+ * Borders are soft (round, tinted) at rest and go full-neon on focus/hover,
+ * so the bright color always marks where the user's attention is.
  */
 
 * {
-    scrollbar-color: $neon-magenta;
+    scrollbar-color: $neon-magenta 60%;
     scrollbar-color-hover: $neon-cyan;
     scrollbar-color-active: $neon-yellow;
-    scrollbar-background: $neon-panel;
-    scrollbar-background-hover: $neon-panel;
-    scrollbar-background-active: $neon-panel;
+    scrollbar-background: $neon-bg;
+    scrollbar-background-hover: $neon-bg;
+    scrollbar-background-active: $neon-bg;
     scrollbar-size-vertical: 1;
 }
 
@@ -58,17 +62,17 @@ LoginScreen {
     width: 60;
     height: auto;
     padding: 0 2;
-    background: $neon-panel;
-    border: heavy $neon-cyan;
+    background: $neon-bg;
+    border: round $neon-cyan;
 }
 
 #login-box.-denied {
-    border: heavy $neon-danger;
+    border: round $neon-danger;
     background: $neon-danger 10%;
 }
 
 #login-box.-granted {
-    border: heavy $neon-green;
+    border: round $neon-green;
 }
 
 .login-label {
@@ -88,11 +92,11 @@ LoginScreen {
 Input {
     background: $neon-bg;
     color: $neon-text;
-    border: tall $neon-dim;
+    border: round $neon-dim 60%;
 }
 
 Input:focus {
-    border: tall $neon-magenta;
+    border: round $neon-magenta;
 }
 
 Input > .input--placeholder {
@@ -116,20 +120,30 @@ Input > .input--cursor {
 
 #status {
     dock: top;
+    height: 2;
     padding: 0 1;
     background: $neon-panel;
+    border-bottom: hkey $neon-magenta 60%;
 }
 
 #key-hints {
     dock: bottom;
+    height: 2;
     padding: 0 1;
     background: $neon-panel;
+    border-top: hkey $neon-dim 40%;
+}
+
+MainScreen.-narrow #status,
+MainScreen.-narrow #key-hints {
+    height: 1;
+    border: none;
 }
 
 #tabstrip {
     display: none;
     height: 1;
-    background: $neon-bg;
+    background: $neon-panel;
 }
 
 MainScreen.-narrow #tabstrip {
@@ -146,30 +160,31 @@ MainScreen.-narrow #sidebar {
 
 #sidebar {
     width: 24;
+    padding: 1 0;
     background: $neon-panel;
-    border: double $neon-magenta;
+    border-right: vkey $neon-dim 40%;
 }
 
 .nav-header {
-    padding: 0 1;
+    padding: 0 2;
     margin-bottom: 1;
-    color: $neon-magenta;
-    text-style: bold;
 }
 
 .nav-item {
     padding: 0 1;
     color: $neon-dim;
+    border-left: blank;
 }
 
 #tabstrip .nav-item {
     width: auto;
-    padding: 0 1 0 0;
+    padding: 0 1;
+    border-left: none;
 }
 
 .nav-item:hover {
     color: $neon-text;
-    background: $neon-bg;
+    background: $neon-dim 15%;
 }
 
 .nav-item.-admin {
@@ -177,22 +192,30 @@ MainScreen.-narrow #sidebar {
 }
 
 .nav-item.-active {
+    color: $neon-cyan;
+    background: $neon-cyan 12%;
+    border-left: outer $neon-cyan;
+    text-style: bold;
+}
+
+#tabstrip .nav-item.-active {
     color: $neon-bg;
     background: $neon-cyan;
-    text-style: bold;
+    border-left: none;
 }
 
 /* neon pulse: MainScreen toggles -pulse a couple of times per second */
 MainScreen.-pulse .nav-item.-active {
+    border-left: outer $neon-magenta;
+}
+
+MainScreen.-pulse #tabstrip .nav-item.-active {
     background: $neon-magenta;
+    border-left: none;
 }
 
 MainScreen.-pulse #dossier {
-    border: double $neon-magenta;
-}
-
-MainScreen.-pulse #pane {
-    border: double $neon-cyan 70%;
+    border: round $neon-magenta;
 }
 
 .nav-spacer {
@@ -200,19 +223,34 @@ MainScreen.-pulse #pane {
 }
 
 .nav-footer {
-    padding: 0 1;
-    color: $neon-dim;
+    height: auto;
+    padding: 0 2;
 }
 
 #pane {
     width: 1fr;
+    padding: 1 2 0 2;
+    background: $neon-bg;
+}
+
+MainScreen.-narrow #pane {
     padding: 0 1;
-    background: $neon-panel;
-    border: double $neon-cyan;
+}
+
+/* heading: "◢◤ ~/section" + one plain sentence, ruled off from the content */
+#section-head {
+    height: auto;
+    margin-bottom: 1;
+    border-bottom: hkey $neon-cyan 35%;
 }
 
 #section-title {
-    margin-bottom: 1;
+    height: 1;
+}
+
+#section-blurb {
+    height: 1;
+    padding-left: 3;
 }
 
 #switcher {
@@ -228,63 +266,85 @@ MainScreen.-pulse #pane {
     color: $neon-dim;
 }
 
-.card {
+/* ledger: yellow date column, a rule, then the entry (education, experience).
+ * The rule brightens on hover, like every other border in the HUD. */
+.ledger {
     height: auto;
     margin-bottom: 1;
-    padding: 0 1;
-    background: $neon-bg;
-    border: round $neon-cyan;
-    border-title-color: $neon-yellow;
-    border-title-style: bold;
 }
 
-.panel {
-    height: auto;
-    margin-bottom: 1;
-    padding: 0 1;
-    background: $neon-bg;
-    border: heavy $neon-magenta;
-    border-title-color: $neon-cyan;
-    border-title-style: bold;
+.ledger-when {
+    width: 14;
+    padding-right: 2;
+    text-align: right;
 }
 
-/* profile */
-
-#profile-top {
-    height: auto;
+.ledger-body {
+    width: 1fr;
+    padding-left: 2;
+    border-left: vkey $neon-dim 40%;
 }
 
-.avatar {
-    width: 20;
-    margin-right: 2;
-    color: $neon-magenta;
+.ledger:hover .ledger-body {
+    border-left: vkey $neon-cyan;
 }
 
-MainScreen.-narrow .avatar {
+MainScreen.-narrow .ledger-when {
+    width: 13;
+    padding-right: 1;
+}
+
+/* every row counts at 80x24: the key-hint bar already explains each section */
+MainScreen.-narrow #section-blurb {
     display: none;
 }
 
-#profile-ident {
-    width: 1fr;
-    height: auto;
+MainScreen.-narrow #section-head {
+    margin-bottom: 0;
 }
 
-.profile-title {
+/* skills */
+
+.group-heading {
+    height: 1;
+}
+
+.skill-group {
+    height: auto;
+    margin-bottom: 1;
+    padding-left: 2;
+}
+
+/* profile: the handle is the hero, everything else stays quiet */
+
+#profile-handle {
+    margin-bottom: 1;
+}
+
+#profile-name {
+    margin-bottom: 1;
+}
+
+#bio {
+    max-width: 78;
+    margin-bottom: 1;
+}
+
+#profile-now {
+    height: auto;
     margin-bottom: 1;
 }
 
 #profile-stats {
     height: auto;
-    margin-top: 1;
+    padding: 0 1;
+    background: $neon-panel;
+    border-top: hkey $neon-magenta 60%;
 }
 
-.stat-box {
-    width: 1fr;
-    height: auto;
-    padding: 0 1;
-    text-align: center;
-    background: $neon-bg;
-    border: round $neon-magenta;
+.stat {
+    width: auto;
+    margin-right: 4;
 }
 
 #sensor-panel {
@@ -292,10 +352,9 @@ MainScreen.-narrow .avatar {
     margin-top: 1;
     padding: 0 1;
     background: $neon-bg;
-    border: round $neon-green 60%;
+    border-top: hkey $neon-green 45%;
     border-title-color: $neon-green;
     border-title-style: bold;
-    border-subtitle-color: $neon-dim;
 }
 
 .sensor-row {
@@ -338,18 +397,16 @@ Sparkline > .sparkline--min-color {
 #project-list {
     width: 40%;
     height: 1fr;
+    margin-right: 1;
     background: $neon-bg;
-    border: heavy $neon-magenta;
+    border: round $neon-dim 60%;
     border-title-color: $neon-cyan;
     border-title-style: bold;
+    border-subtitle-color: $neon-dim;
 }
 
 #project-list:focus {
-    border: heavy $neon-cyan;
-}
-
-#project-list {
-    border-subtitle-color: $neon-dim;
+    border: round $neon-cyan;
 }
 
 #project-list > ListItem {
@@ -358,15 +415,19 @@ Sparkline > .sparkline--min-color {
 }
 
 #project-list > ListItem Label {
+    width: 1fr;
     padding: 0 1;
+    text-wrap: nowrap;
+    text-overflow: ellipsis;
 }
 
 #project-list > ListItem.-highlight {
-    background: $neon-magenta 35%;
+    background: $neon-magenta 20%;
 }
 
 #project-list:focus > ListItem.-highlight {
-    background: $neon-cyan 35%;
+    color: $neon-cyan;
+    background: $neon-cyan 15%;
     text-style: bold;
 }
 
@@ -377,11 +438,12 @@ Sparkline > .sparkline--min-color {
 
 #dossier {
     height: auto;
-    padding: 0 1;
+    padding: 1 2;
     background: $neon-bg;
-    border: double $neon-danger;
+    border: round $neon-danger;
     border-title-color: $neon-danger;
     border-title-style: bold;
+    border-subtitle-color: $neon-dim;
 }
 
 MainScreen.-narrow ProjectsSection {
@@ -391,6 +453,7 @@ MainScreen.-narrow ProjectsSection {
 MainScreen.-narrow #project-list {
     width: 1fr;
     height: 7;
+    margin-right: 0;
 }
 
 /* awards */
@@ -401,7 +464,7 @@ MainScreen.-narrow #project-list {
 
 .trophy {
     width: 15;
-    margin-right: 2;
+    margin-right: 3;
     color: $neon-yellow;
 }
 
@@ -414,27 +477,73 @@ MainScreen.-narrow .trophy {
     height: auto;
 }
 
+/* the frame encodes the placing: 1st is heavy and yellow, others soft */
+.award-card {
+    height: auto;
+    margin-bottom: 1;
+    padding: 0 1;
+    border: round $neon-dim 60%;
+    border-title-color: $neon-text;
+    border-title-style: bold;
+    border-subtitle-color: $neon-yellow;
+}
+
+.award-card.-first {
+    border: heavy $neon-yellow 70%;
+    border-title-color: $neon-yellow;
+}
+
+.award-card:hover {
+    border: round $neon-cyan;
+}
+
+.award-card.-first:hover {
+    border: heavy $neon-yellow;
+}
+
 /* contact */
 
-#contact-actions {
-    layout: grid;
-    grid-size: 2;
-    grid-gutter: 0 1;
+.contact-row {
     height: auto;
 }
 
-.neon-button {
+.contact-label {
+    width: 10;
+}
+
+.contact-value {
     width: 1fr;
+}
+
+#contact-actions {
+    height: auto;
+    margin: 1 0;
+}
+
+#contact-actions Button {
+    width: auto;
+    min-width: 0;
+    margin-right: 2;
+    padding: 0 1;
     color: $neon-cyan;
-    background: $neon-bg;
-    border: tall $neon-cyan;
+    background: $neon-panel;
     text-style: bold;
 }
 
-.neon-button:hover,
-.neon-button:focus {
+#contact-actions Button:hover,
+#contact-actions Button:focus {
     color: $neon-bg;
     background: $neon-cyan;
+}
+
+#contact-actions #decrypt-phone {
+    color: $neon-magenta;
+}
+
+#contact-actions #decrypt-phone:hover,
+#contact-actions #decrypt-phone:focus {
+    color: $neon-bg;
+    background: $neon-magenta;
 }
 
 /* terminal */
@@ -447,6 +556,10 @@ TerminalSection {
     height: 1fr;
     padding: 0 1;
     background: $neon-bg;
+    border: round $neon-green 60%;
+}
+
+#fake-shell:focus-within {
     border: round $neon-green;
 }
 
@@ -482,6 +595,11 @@ TerminalSection {
     margin: 1 0;
 }
 
+.blackice-body {
+    padding-left: 2;
+    border-left: vkey $neon-danger 60%;
+}
+
 /* ------------------------------------------------------------ overlays -- */
 
 HelpScreen {
@@ -495,7 +613,7 @@ HelpScreen {
     height: auto;
     padding: 1 2;
     background: $neon-panel;
-    border: double $neon-magenta;
+    border: round $neon-magenta;
 }
 
 #help-box Static {
@@ -524,5 +642,5 @@ TooSmallScreen {
     width: auto;
     padding: 1 2;
     text-align: center;
-    border: heavy $neon-danger;
+    border: round $neon-danger;
 }

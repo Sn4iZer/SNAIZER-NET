@@ -9,9 +9,11 @@ from snaizer_net.palette import SnaizerCommands
 from snaizer_net.screens.login import LoginScreen
 from snaizer_net.screens.main import MainScreen
 from snaizer_net.sections.panes import ProjectsSection, TimelineSection, filter_tags
-from snaizer_net.timeline import build_timeline
+from snaizer_net.timeline import build_timeline, period_label
 from snaizer_net.widgets.counter import CounterStat, format_partial
+from snaizer_net.widgets.decrypt_text import DecryptText
 from snaizer_net.widgets.fake_shell import FakeShellWidget
+from snaizer_net.widgets.ledger import stack_date
 from snaizer_net.widgets.project_card import ProjectCard
 from snaizer_net.widgets.scanline import ScanLine
 from snaizer_net.widgets.sensor_panel import SensorPanel
@@ -42,9 +44,30 @@ def test_timeline_is_newest_first_and_complete(profile):
     )
     keys = [entry.sort_key for entry in entries]
     assert keys == sorted(keys, reverse=True)
-    assert entries[0].title == "Sport Leader"
-    assert entries[0].when == "Jun-Jul 2026"
-    assert entries[1].kind == "education" and entries[1].when == "2026-2028"
+    assert entries[0].title == "Sales Advisor"
+    assert entries[0].when == "Jun–Jul 2026"
+    assert entries[1].kind == "education" and entries[1].when == "2026–present"
+    assert any(e.when == "Nov 2024–Apr 2025" for e in entries)
+
+
+@pytest.mark.parametrize(
+    ("raw", "label"),
+    [
+        ("Jun 2026 - Jul 2026", "Jun–Jul 2026"),
+        ("Nov 2024 - Apr 2025", "Nov 2024–Apr 2025"),
+        ("2023-2025", "2023–2025"),
+        ("2026-present", "2026–present"),
+        ("2024", "2024"),
+        ("not a period", "not a period"),
+    ],
+)
+def test_period_labels(raw, label):
+    assert period_label(raw) == label
+
+
+def test_long_dates_stack_after_the_dash():
+    assert stack_date("Nov 2024–Apr 2025") == "Nov 2024–\nApr 2025"
+    assert stack_date("2026–present") == "2026–present"
 
 
 def test_filter_tags_need_two_projects(profile):
@@ -57,14 +80,14 @@ async def test_profile_counters_and_simulated_sensor_feed(make_app):
     app = make_app(skip_intro=True, animations=True)
     async with app.run_test(size=(120, 45)) as pilot:
         values = [c.value for c in app.screen.query(CounterStat)]
-        assert values[:2] == ["2", "5"]
+        assert values[:2] == ["5", "2"]  # projects, awards
         for _ in range(50):  # counters land on the real value
             await pilot.pause(0.1)
             if "50,000+" in screen_text(app):
                 break
         assert "50,000+" in screen_text(app)
         panel = app.screen.query_one(SensorPanel)
-        assert "SIMULATED" in panel.border_title
+        assert "Simulated" in panel.border_title and "not real" in panel.border_title
         spark = app.screen.query_one("#spark-temp", Sparkline)
         before = list(spark.data)
         await pilot.pause(1.2)
@@ -108,7 +131,7 @@ async def test_project_tag_filter_cycles(make_app):
         assert section.active_filter == "Python"
         assert all("Python" in p.tags for p in section.shown_projects)
         assert len(section.shown_projects) == 4
-        assert "Python (4)" in screen_text(app)
+        assert "tag: Python (4)" in screen_text(app)
         await pilot.press("F")
         await pilot.pause(0.2)
         assert section.active_filter is None
@@ -161,11 +184,11 @@ async def test_command_palette_provider_entries(make_app):
         await pilot.pause(0.1)
         provider = SnaizerCommands(app.screen)
         texts = [text for text, _, _ in provider.entries()]
-        assert "Go to TIMELINE" in texts
+        assert "Go to timeline" in texts
         assert "Open dossier: SpaceUIT Educational Platform" in texts
         assert "Theme: synthwave" in texts
         assert "Filter projects: Python" in texts
-        assert "Go to BLACK-ICE" not in texts  # admin only
+        assert "Go to black-ice" not in texts  # admin only
         hits = [hit async for hit in provider.search("synthw")]
         assert hits and "synthwave" in str(hits[0].match_display)
 
@@ -209,3 +232,51 @@ async def test_toggle_animations_at_runtime(make_app):
         assert not app.screen.query_one(ScanLine).display
         app.toggle_animations()
         assert app.motion_enabled
+
+
+async def test_phone_stays_sealed_until_decrypted(make_app):
+    app = make_app(skip_intro=True, animations=True)
+    async with app.run_test(size=(120, 40)) as pilot:
+        await pilot.pause(0.1)
+        await pilot.press("7")
+        await pilot.pause(0.2)
+        assert "627 777 113" not in screen_text(app)
+        phone = app.screen.query_one("#phone", DecryptText)
+        await pilot.press("d")
+        await pilot.pause(0.05)
+        assert phone.decoding  # the decode animation is running
+        for _ in range(40):
+            await pilot.pause(0.1)
+            if phone.revealed:
+                break
+        assert phone.revealed
+        assert "+212 627 777 113" in screen_text(app)
+        assert str(app.screen.query_one("#decrypt-phone").label) == "Copy phone"
+
+
+async def test_decrypt_button_and_d_from_another_section(make_app):
+    app = make_app(skip_intro=True)
+    async with app.run_test(size=(120, 40)) as pilot:
+        await pilot.pause(0.1)
+        await pilot.press("2", "d")  # d jumps to contact and decrypts
+        await pilot.pause(0.3)
+        assert app.screen.current == "contact"
+        assert "+212 627 777 113" in screen_text(app)
+        copied: list[str] = []
+        app.copy_to_clipboard = copied.append
+        await pilot.click("#decrypt-phone")
+        assert copied == ["+212 627 777 113"]
+
+
+async def test_section_heading_is_a_path_with_a_blurb(make_app):
+    app = make_app(skip_intro=True)
+    async with app.run_test(size=(120, 40)) as pilot:
+        await pilot.pause(0.1)
+        await pilot.press("6")
+        await pilot.pause(0.1)
+        text = screen_text(app)
+        assert "~/experience" in text
+        assert "Jobs and ventures, newest first." in text
+        await pilot.resize_terminal(80, 24)
+        await pilot.pause(0.2)
+        assert "Jobs and ventures" not in screen_text(app)  # blurb hidden when narrow

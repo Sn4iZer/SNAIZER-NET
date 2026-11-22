@@ -45,25 +45,23 @@ class StatusBar(Static):
         cpu_bar = "▮" * (self.cpu // 20) + "▯" * (5 - self.cpu // 20)
         cpu = f"{self.cpu:>2}% "
         net = f"{self.net:4.1f}MB/s"
-        link = self.mode.upper()
+        link = self.mode
         clock = datetime.now().strftime("%H:%M:%S")
         uptime = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
-        # (plain text for width accounting, markup) in priority order
+        # (plain text for width accounting, markup) in priority order.
+        # Labels are dim lowercase so the values carry the weight.
         items: list[tuple[str, str]] = [
-            (
-                "▓▒░ SNAIZER//NET",
-                tint("magenta", "▓▒░ ", "bold") + tint("cyan", "SNAIZER//NET", "bold"),
-            ),
-            (f"USER:{self.user}", tint("dim", "USER:") + tint("green", self.user, "bold")),
+            ("▓▒░ SNAIZER//NET", tint("magenta", "▓▒░ SNAIZER//NET", "bold")),
+            (f"user {self.user}", tint("dim", "user ") + tint("green", self.user, "bold")),
         ]
         if self.admin:
             items.append((" ADMIN ", "[reverse $neon-yellow bold] ADMIN [/]"))
         items += [
             (clock, tint("yellow", clock)),
-            (f"UP {uptime}", tint("dim", "UP ") + safe(uptime)),
-            (f"CPU {cpu}{cpu_bar}", tint("dim", "CPU ") + safe(cpu) + tint("cyan", cpu_bar)),
-            (f"NET {net}", tint("dim", "NET ") + safe(net)),
-            (f"LINK:{link}", tint("dim", "LINK:") + tint("magenta", link)),
+            (f"up {uptime}", tint("dim", "up ") + safe(uptime)),
+            (f"cpu {cpu}{cpu_bar}", tint("dim", "cpu ") + safe(cpu) + tint("cyan", cpu_bar)),
+            (f"net {net}", tint("dim", "net ") + safe(net)),
+            (f"link {link}", tint("dim", "link ") + safe(link)),
         ]  # fmt: skip
         return fit_items(items, self.size.width or 80)
 
@@ -98,6 +96,7 @@ CONTEXT_HINTS = {
         ("↑↓", "history"),
         ("exit", "quit"),
     ],
+    "contact": [("d", "decrypt phone")],
 }
 
 

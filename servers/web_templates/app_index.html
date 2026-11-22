@@ -4,115 +4,154 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{{ application.name or 'SNAIZER//NET' }}</title>
-    <meta name="description" content="SNAIZER//NET: the cyberpunk terminal portfolio of Mohammed Tchichi (Sn4iZer)." />
+    <meta
+      name="description"
+      content="Mohammed Tchichi (Sn4iZer), Master's student in AI & IoT. A terminal portfolio you can also open with ssh."
+    />
+    <meta property="og:title" content="SNAIZER//NET: Mohammed Tchichi (Sn4iZer)" />
+    <meta
+      property="og:description"
+      content="Machine learning, network security and IoT. Break in to read the case files."
+    />
+    <meta property="og:type" content="website" />
     <meta name="theme-color" content="#0a0a12" />
     <link
       rel="icon"
       type="image/svg+xml"
       href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='10' fill='%230a0a12'/%3E%3Cpath d='M44 14H22a8 8 0 0 0 0 16h20a8 8 0 0 1 0 16H18' fill='none' stroke='%2300f0ff' stroke-width='7' stroke-linecap='square'/%3E%3Cpath d='M50 10 40 54' stroke='%23ff2bd6' stroke-width='4'/%3E%3C/svg%3E"
     />
+    <link rel="preload" href="/assets/fonts/MartianMono.ttf" as="font" type="font/ttf" crossorigin />
     <link rel="stylesheet" href="{{ config.static.url }}css/xterm.css" />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto%20Mono" />
     <script src="{{ config.static.url }}js/textual.js"></script>
     <style>
+      /* textual.js hard-codes "Roboto Mono" for the terminal; we serve Martian
+         Mono (OFL) under that name so the whole page uses one local typeface. */
+      @font-face {
+        font-family: "Roboto Mono";
+        src: url("/assets/fonts/MartianMono.ttf") format("truetype");
+        font-weight: 100 800;
+        font-display: block;
+      }
+
+      :root {
+        --void: #0a0a12;
+        --slab: #10101c;
+        --signal: #00f0ff;
+        --brand: #ff2bd6;
+        --text: #d6e4ff;
+        --dim: #6b7a99;
+        --mono: "Roboto Mono", ui-monospace, Menlo, Consolas, monospace;
+      }
+
       html,
       body {
         margin: 0;
-        background: #0a0a12;
-      }
-
-      .dialog-container {
-        position: absolute;
-        width: 100vw;
-        height: 100vh;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 10;
-      }
-
-      .shade {
-        position: absolute;
-        width: 100%;
         height: 100%;
-        background: repeating-linear-gradient(
-            0deg,
-            rgba(0, 240, 255, 0.04) 0px,
-            rgba(0, 240, 255, 0.04) 1px,
-            transparent 1px,
-            transparent 3px
-          ),
-          #0a0a12;
+        background: var(--void);
+        color: var(--text);
+        font: 15px/1.6 var(--mono);
       }
 
-      .intro {
-        position: relative;
-        width: 560px;
-        max-width: 90vw;
-        padding: 32px;
-        z-index: 20;
-        font-family: "Roboto Mono", menlo, monospace;
-        font-size: 16px;
-        text-align: center;
-        color: #d6e4ff;
-        background-color: #10101c;
-        border: 2px solid #00f0ff;
-        box-shadow: 0 0 24px rgba(0, 240, 255, 0.35), inset 0 0 24px rgba(255, 43, 214, 0.15);
+      /* Pre-connection and post-disconnect states read like the terminal
+         session itself: top-left, plain lines, a blinking block cursor. */
+      .session {
+        position: absolute;
+        inset: 0;
+        z-index: 10;
+        padding: 2rem 2.25rem;
+        background: var(--void);
       }
 
-      .intro .logo {
-        color: #00f0ff;
-        font-weight: bold;
-        letter-spacing: 4px;
-        text-shadow: 2px 0 #ff2bd6, -2px 0 #00f0ff;
+      .session p {
+        margin: 0;
+        max-width: 72ch;
       }
 
-      .intro .sub {
-        margin-top: 12px;
-        color: #6b7a99;
-        font-size: 13px;
+      .session .host {
+        color: var(--brand);
+        font-weight: 700;
       }
 
-      body.-first-byte .intro-dialog,
-      body.-first-byte .intro-dialog .shade {
-        opacity: 0;
-        transition: opacity 0.3s ease-out;
+      .session .muted {
+        color: var(--dim);
+      }
+
+      .cursor {
+        display: inline-block;
+        width: 0.6em;
+        height: 1.1em;
+        margin-left: 0.15em;
+        vertical-align: -0.15em;
+        background: var(--signal);
+        animation: blink 1.1s steps(1) infinite;
+      }
+
+      @keyframes blink {
+        50% {
+          opacity: 0;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .cursor {
+          animation: none;
+        }
+        body .textual-terminal {
+          transition: none !important;
+        }
+      }
+
+      body.-first-byte .intro {
         display: none;
       }
 
       body .textual-terminal {
+        height: 100vh;
         opacity: 0;
-        transition: opacity 0.3s ease-out;
+        transition: opacity 0.25s ease-out;
       }
 
       body.-first-byte .textual-terminal {
         opacity: 1;
       }
 
-      button {
-        padding: 12px 28px;
-        margin: 20px auto 0;
+      .closed {
+        display: none;
+      }
+
+      body.-closed .closed {
         display: block;
-        font-family: "Roboto Mono", menlo, monospace;
-        font-weight: bold;
-        color: #0a0a12;
-        background-color: #00f0ff;
-        border: none;
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem 1.5rem;
+        align-items: center;
+        margin-top: 1.5rem;
+      }
+
+      button {
+        padding: 0.45rem 1rem;
+        font: inherit;
+        font-weight: 700;
+        color: var(--void);
+        background: var(--signal);
+        border: 0;
         cursor: pointer;
       }
 
       button:hover {
-        background: #ff2bd6;
+        background: var(--brand);
       }
 
-      .closed-dialog {
-        opacity: 0;
-        display: none;
+      button:focus-visible {
+        outline: 2px solid var(--brand);
+        outline-offset: 3px;
       }
 
-      body.-closed .closed-dialog {
-        opacity: 1;
-        display: flex;
+      code {
+        color: var(--signal);
       }
 
       #start {
@@ -120,7 +159,7 @@
       }
 
       #start.-delay {
-        display: block;
+        display: inline-block;
       }
     </style>
     <script>
@@ -140,21 +179,20 @@
     </script>
   </head>
   <body data-pingurl="{{ ping_url }}">
-    <div class="dialog-container intro-dialog">
-      <div class="shade"></div>
-      <div class="intro">
-        <div class="logo">SNAIZER//NET</div>
-        <div class="sub">establishing neural link&hellip;</div>
-        <button type="button" onClick="refresh()" id="start">JACK IN</button>
+    <div class="session intro">
+      <p><span class="host">snaizer-net</span> <span class="muted">login:</span> connecting<span class="cursor"></span></p>
+      <noscript><p>This portfolio runs in a live terminal and needs JavaScript. You can also open it with <code>{{ ssh_command }}</code>.</p></noscript>
+      <div class="actions">
+        <button type="button" onclick="refresh()" id="start">Connect</button>
       </div>
     </div>
 
-    <div class="dialog-container closed-dialog">
-      <div class="shade"></div>
-      <div class="intro">
-        <div class="logo">LINK CLOSED</div>
-        <div class="sub">stay frosty, runner.</div>
-        <button type="button" onClick="refresh()">RECONNECT</button>
+    <div class="session closed">
+      <p>Connection to <span class="host">snaizer-net</span> closed.</p>
+      <p class="muted">Sessions end when you quit or after 15 idle minutes.</p>
+      <div class="actions">
+        <button type="button" onclick="refresh()">Reconnect</button>
+        <span class="muted">or from a terminal: <code>{{ ssh_command }}</code></span>
       </div>
     </div>
 
@@ -164,5 +202,38 @@
       data-session-websocket-url="{{ app_websocket_url }}"
       data-font-size="{{ font_size }}"
     ></div>
+
+    <script>
+      // textual.js starts on window.onload. Wait for the font first (cell
+      // metrics are measured once), and on small screens shrink the font so
+      // the 80x24 minimum layout fits, unless ?fontsize= was given.
+      (function () {
+        const start = window.onload;
+        const terminal = document.getElementById("terminal");
+        const MIN_COLS = 82;
+        const MIN_ROWS = 25;
+
+        function fittedSize() {
+          const probe = document.createElement("canvas").getContext("2d");
+          probe.font = '100px "Roboto Mono"';
+          const advance = probe.measureText("M").width / 100 || 0.62;
+          const byWidth = window.innerWidth / (MIN_COLS * advance);
+          const byHeight = window.innerHeight / (MIN_ROWS * 1.25);
+          return Math.max(8, Math.min(16, Math.floor(Math.min(byWidth, byHeight))));
+        }
+
+        window.onload = async function (event) {
+          try {
+            await document.fonts.load('16px "Roboto Mono"');
+          } catch (error) {
+            /* fall back to the next font in the stack */
+          }
+          if (!new URLSearchParams(window.location.search).has("fontsize")) {
+            terminal.dataset.fontSize = String(fittedSize());
+          }
+          if (start) start.call(window, event);
+        };
+      })();
+    </script>
   </body>
 </html>

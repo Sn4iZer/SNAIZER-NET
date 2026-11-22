@@ -51,7 +51,8 @@ ignore = [
     "D213", # conflicts with D212
     "D401", # descriptive docstrings ("True if ...") read better for properties/handlers
     "RUF012", # Textual's BINDINGS / CSS class attributes are idiomatic lists
-    "RUF001", # box-drawing / block glyphs are intentional
+    "RUF001", # box-drawing / block glyphs and en dashes are intentional
+    "RUF002",
     "RUF003",
 ]
 

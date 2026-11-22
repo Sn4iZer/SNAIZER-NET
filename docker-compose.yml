@@ -27,6 +27,7 @@ services:
       PORT: "8000"
       PUBLIC_URL: ${PUBLIC_URL:-}
       WEB_MAX_SESSIONS: ${WEB_MAX_SESSIONS:-50}
+      SSH_PUBLIC_PORT: ${SSH_PUBLIC_PORT:-2222} # shown in the page's ssh hint
       HEALTH_PORT: "8000"
     expose:
       - "8000"

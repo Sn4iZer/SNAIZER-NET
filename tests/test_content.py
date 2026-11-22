@@ -4,7 +4,13 @@ import pytest
 import yaml
 
 from snaizer_net.__main__ import main
-from snaizer_net.content import ContentError, load_lore, load_profile, parse_period
+from snaizer_net.content import (
+    ContentError,
+    default_content_dir,
+    load_lore,
+    load_profile,
+    parse_period,
+)
 
 
 def edit_profile(content_dir: Path, mutate) -> Path:
@@ -21,9 +27,10 @@ def test_real_profile_matches_cv(profile):
     assert profile.contact.email == "mohammedtchichi03@gmail.com"
     assert profile.contact.github_url == "https://github.com/Sn4iZer"
     assert profile.contact.location == "Tiflet, Morocco"
-    assert [edu.period for edu in profile.education] == ["2026-2028", "2025-2026", "2023-2025"]
-    assert profile.education[0].degree.startswith("Master's in Artificial Intelligence & IoT")
+    assert [edu.period for edu in profile.education] == ["2026-present", "2025-2026", "2023-2025"]
+    assert profile.education[0].degree == "Master d'Excellence in Artificial Intelligence & IoT"
     assert "Master's" in profile.identity.title
+    assert profile.identity.bio.startswith("AI & Data Engineering graduate")
     assert len(profile.projects) == 5
     assert len(profile.awards) == 2
     assert {lang.name: lang.level for lang in profile.languages} == {
@@ -34,11 +41,34 @@ def test_real_profile_matches_cv(profile):
     assert profile.projects[0].title == "Data-Driven Pentesting Framework"
     assert any("98%" in bullet for bullet in profile.projects[2].bullets)
     assert {award.place for award in profile.awards} == {"1st Place", "3rd Place"}
-    decathlon, ecommerce = profile.experience
-    assert (decathlon.title, decathlon.organization) == ("Sport Leader", "Decathlon Kenitra")
+    decathlon, support, ecommerce = profile.experience
+    assert (decathlon.title, decathlon.organization) == ("Sales Advisor", "Decathlon, Kenitra")
     assert decathlon.period == "Jun 2026 - Jul 2026"
-    assert len(decathlon.bullets) == 2
+    assert len(decathlon.bullets) == 3
+    assert support.title == "Freelance IT Customer Support (Remote)"
+    assert support.period == "Nov 2024 - Apr 2025"
+    assert len(support.bullets) == 4
     assert "MAD 35,000" in ecommerce.bullets[0]
+    assert profile.skills[0].name == "Programming"
+
+
+def test_phone_is_sealed_in_the_file_and_unseals(profile):
+    raw = (default_content_dir() / "profile.yaml").read_text(encoding="utf-8")
+    assert "627 777 113" not in raw
+    assert profile.contact.phone_sealed.startswith("snz1:")
+    assert profile.contact.phone == "+212 627 777 113"
+
+
+def test_bad_sealed_phone_is_a_content_error(content_copy):
+    path = edit_profile(content_copy, lambda d: d["contact"].update(phone_sealed="+212 600"))
+    with pytest.raises(ContentError, match="phone_sealed"):
+        load_profile(path)
+
+
+def test_phone_is_optional(content_copy):
+    path = edit_profile(content_copy, lambda d: d["contact"].pop("phone_sealed"))
+    contact = load_profile(path).contact
+    assert contact.phone_sealed is None and contact.phone is None
 
 
 @pytest.mark.parametrize(

@@ -25,7 +25,7 @@ def test_help_lists_every_command(shell):
     text = plain(shell.execute("help"))
     for name in ("help", "whoami", "ls", "cat", "projects", "skills", "contact", "neofetch",
                  "matrix", "theme", "clear", "exit", "grep", "open", "timeline", "fortune",
-                 "hack", "history"):  # fmt: skip
+                 "hack", "history", "decrypt"):  # fmt: skip
         assert name in text
 
 
@@ -133,7 +133,7 @@ def test_admin_only_file(profile, lore, shell):
 
 def test_grep_is_literal_and_highlights(shell):
     text = plain(shell.execute("grep decathlon"))
-    assert "experience.txt" in text and "Decathlon Kenitra" in text
+    assert "experience.txt" in text and "Decathlon, Kenitra" in text
     assert "no match" in plain(shell.execute("grep zzzqqq"))
     assert "usage" in plain(shell.execute("grep"))
     # regex metacharacters are plain text, never patterns
@@ -150,9 +150,22 @@ def test_open_project(shell, profile):
 
 def test_timeline_command_lists_new_entries(shell):
     text = plain(shell.execute("timeline"))
-    assert "Sport Leader" in text
-    assert "Master's in Artificial Intelligence & IoT" in text
-    assert text.index("Sport Leader") < text.index("E-commerce Founder")
+    assert "Sales Advisor" in text
+    assert "Master d'Excellence in Artificial Intelligence & IoT" in text
+    assert text.index("Sales Advisor") < text.index("Freelance IT Customer Support")
+    assert text.index("Freelance IT Customer Support") < text.index("E-commerce Founder")
+
+
+def test_contact_shows_phone_sealed_and_decrypt_reveals_it(shell):
+    contact = plain(shell.execute("contact"))
+    assert "sealed" in contact and "627" not in contact
+    assert "627" not in plain(shell.execute("cat contact.txt"))
+    assert "no match" in plain(shell.execute("grep 627"))
+    result = shell.execute("decrypt phone")
+    assert result.pace == 1
+    assert "+212 627 777 113" in plain(result)
+    assert "usage" in plain(shell.execute("decrypt"))
+    assert "usage" in plain(shell.execute("decrypt email"))
 
 
 def test_fortune_hack_and_sudo(shell, lore):
