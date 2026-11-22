@@ -239,10 +239,10 @@ sudo ufw status verbose
 ### 4. Get the code and configure
 
 Push this folder to a GitHub repo first (the URL below assumes
-`Sn4iZer/snaizer-net`), or copy it over with `scp -r snaizer-net deploy@203.0.113.10:`.
+`Sn4iZer/SNAIZER-NET`), or copy it over with `scp -r snaizer-net deploy@203.0.113.10:`.
 
 ```bash
-git clone https://github.com/Sn4iZer/snaizer-net.git
+git clone https://github.com/Sn4iZer/SNAIZER-NET.git
 cd snaizer-net
 cp .env.example .env
 nano .env        # set DOMAIN=snaizer.example.com
@@ -312,7 +312,7 @@ your local `~/.ssh/config` so you don't forget the new port.
 
 ```bash
 sudo useradd --system --no-create-home --home-dir /opt/snaizer-net --shell /usr/sbin/nologin snaizer
-sudo git clone https://github.com/Sn4iZer/snaizer-net.git /opt/snaizer-net
+sudo git clone https://github.com/Sn4iZer/SNAIZER-NET.git /opt/snaizer-net
 sudo chown -R snaizer:snaizer /opt/snaizer-net
 cd /opt/snaizer-net
 sudo -u snaizer python3 -m venv .venv
