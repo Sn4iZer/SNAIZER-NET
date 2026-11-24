@@ -22,7 +22,7 @@ from snaizer_net.shell.vfs import HOME, build_vfs
 from snaizer_net.themes import DEFAULT_THEME, USER_THEMES
 from snaizer_net.timeline import KIND_COLOR, KIND_GLYPH, build_timeline
 
-Action = Literal["clear", "exit", "matrix", "theme", "open_project"]
+Action = Literal["clear", "exit", "matrix", "theme", "open_project", "classified"]
 NEOFETCH_VALUE_WIDTH = 44
 MAX_HISTORY = 100
 MAX_GREP_MATCHES = 30
@@ -113,6 +113,11 @@ class FakeShell:
             "hack": Command(self._hack, "hack", "totally real intrusion (fiction)"),
             "history": Command(self._history, "history", "list previous commands"),
             "matrix": Command(self._matrix, "matrix", "enter the rain"),
+            "classified": Command(
+                self._classified,
+                "classified",
+                f"restricted file {lore.overwatch.file_id} (do not open)",
+            ),
             "theme": Command(self._theme, "theme [name]", "list or switch color themes"),
             "clear": Command(self._clear, "clear", "clear the screen"),
             "exit": Command(self._exit, "exit", "disconnect from the node"),
@@ -391,6 +396,13 @@ class FakeShell:
                 f"{tint('dim', f'{index:>4}')}  {safe(entry)}"
                 for index, entry in enumerate(self.history, start=1)
             )
+        )
+
+    def _classified(self, args: list[str]) -> ShellResult:
+        file_id = self.lore.overwatch.file_id
+        return _out(
+            tint("danger", f"opening restricted file {file_id}... access will be logged.", "bold"),
+            action="classified",
         )
 
     def _matrix(self, args: list[str]) -> ShellResult:

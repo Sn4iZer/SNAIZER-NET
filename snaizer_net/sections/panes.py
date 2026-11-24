@@ -11,6 +11,7 @@ from snaizer_net.content import Lore, Profile, Project, parse_period
 from snaizer_net.markup import safe, tint
 from snaizer_net.shell.commands import FakeShell
 from snaizer_net.timeline import KIND_COLOR, KIND_GLYPH, build_timeline, period_label
+from snaizer_net.widgets.classified import ClassifiedButton
 from snaizer_net.widgets.counter import CounterStat
 from snaizer_net.widgets.decrypt_text import DecryptText
 from snaizer_net.widgets.fake_shell import FakeShellWidget
@@ -59,11 +60,15 @@ def now_readout(profile: Profile) -> list[tuple[str, str]]:
 
 
 class ProfileSection(Section):
-    """Handle as the hero, then name, bio, a "now" readout and the numbers."""
+    """Handle as the hero, then name, bio, a "now" readout, the file and the numbers."""
 
-    def __init__(self, profile: Profile, *, id: str | None = None) -> None:
+    def __init__(
+        self, profile: Profile, lore: Lore, *, classified: bool = True, id: str | None = None
+    ) -> None:
         super().__init__(id=id)
         self.profile = profile
+        self.lore = lore
+        self.classified = classified
 
     def compose(self) -> ComposeResult:
         """Hero, readout, counters and the simulated feed."""
@@ -84,6 +89,8 @@ class ProfileSection(Section):
             ),
             id="profile-now",
         )
+        if self.classified:
+            yield ClassifiedButton(self.lore.overwatch, id="classified")
         stats = [
             (str(len(self.profile.projects)), "projects"),
             (str(len(self.profile.awards)), "awards"),

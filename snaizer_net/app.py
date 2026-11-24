@@ -42,6 +42,10 @@ class SnaizerApp(App[None]):
         self.admin = False
         self._too_small = False
         self._animations = config.animations
+        self.classified_opened = False
+        """The profile's classified file was opened this visit (its button is gone)."""
+        self.overwatch_speed = 1.0
+        """Playback speed of the classified walkthrough (tests raise it)."""
         for theme in all_themes():
             self.register_theme(theme)
         self.theme = self.initial_theme()

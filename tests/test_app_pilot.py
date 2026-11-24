@@ -13,7 +13,7 @@ from snaizer_net.widgets.nav import NavItem
 from snaizer_net.widgets.project_card import ProjectCard
 
 EXPECTED = {
-    "profile": ["Mohammed Tchichi", "Master's student in AI & IoT", "projects", "50,000+"],
+    "profile": ["Mohammed Tchichi", "Master's student in AI & IoT", "TOP SECRET // EYES ONLY"],
     "education": ["Master d'Excellence in Artificial", "B.Sc. Artificial Intelligence"],
     "skills": ["Python (OOP)", "relative proficiency", "Programming"],
     "projects": ["Data-Driven Pentesting Framework", "CLASSIFIED", "Currency Converter"],

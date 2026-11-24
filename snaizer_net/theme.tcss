@@ -335,6 +335,25 @@ MainScreen.-narrow #section-head {
     margin-bottom: 1;
 }
 
+/* the file you shouldn't open: heavy red frame, slow flicker (-dim) */
+#classified {
+    width: auto;
+    height: auto;
+    margin-bottom: 1;
+    padding: 0 1;
+    border: heavy $neon-danger;
+}
+
+#classified.-dim {
+    border: heavy $neon-danger 35%;
+}
+
+#classified:hover,
+#classified:focus {
+    background: $neon-danger 18%;
+    border: heavy $neon-danger;
+}
+
 #profile-stats {
     height: auto;
     padding: 0 1;
@@ -598,6 +617,56 @@ TerminalSection {
 .blackice-body {
     padding-left: 2;
     border-left: vkey $neon-danger 60%;
+}
+
+/* ----------------------------------------------- classified walkthrough -- */
+/* A different world: red is the only accent; the HUD chrome is gone. */
+
+OverwatchScreen {
+    background: $neon-bg;
+}
+
+OverwatchScreen.-alarm {
+    background: $neon-danger 40%;
+}
+
+#ow-header {
+    dock: top;
+    height: 3;
+    padding: 0 2;
+    border-bottom: hkey $neon-danger 60%;
+}
+
+#ow-footer {
+    dock: bottom;
+    height: 2;
+    padding: 0 2;
+    border-top: hkey $neon-danger 60%;
+}
+
+OverwatchScreen.-breach #ow-header,
+OverwatchScreen.-breach #ow-footer {
+    display: none;
+}
+
+#ow-stage-wrap {
+    height: 1fr;
+}
+
+#ow-stage {
+    height: 1fr;
+    padding: 1 2;
+}
+
+OverwatchScreen.-short #ow-stage {
+    padding: 0 2;
+}
+
+#ow-stage.-ending {
+    margin: 1 2;
+    padding: 1 3;
+    border: heavy $neon-danger;
+    background: $neon-danger 8%;
 }
 
 /* ------------------------------------------------------------ overlays -- */

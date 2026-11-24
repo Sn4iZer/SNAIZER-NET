@@ -14,6 +14,7 @@ from snaizer_net.markup import tint
 from snaizer_net.navigation import SECTIONS, visible_sections
 from snaizer_net.screens._app import snaizer_app
 from snaizer_net.screens.overlays import HelpScreen, MatrixScreen
+from snaizer_net.screens.overwatch import OverwatchScreen
 from snaizer_net.sections import (
     AwardsSection,
     BlackIceSection,
@@ -28,6 +29,7 @@ from snaizer_net.sections import (
 )
 from snaizer_net.shell.commands import FakeShell
 from snaizer_net.themes import USER_THEMES
+from snaizer_net.widgets.classified import ClassifiedButton
 from snaizer_net.widgets.fake_shell import FakeShellWidget
 from snaizer_net.widgets.glitch_label import GlitchLabel
 from snaizer_net.widgets.nav import NavItem, Sidebar, TabStrip
@@ -41,7 +43,8 @@ class MainScreen(Screen[None]):
     AUTO_FOCUS = ""  # disabled: focus is managed per section in show_section()
     BINDINGS = [
         *(Binding(spec.key, f"goto('{spec.id}')", spec.title, show=False) for spec in SECTIONS),
-        Binding("down,j,tab", "move(1)", "next section", show=False),
+        Binding("down,j", "move(1)", "next section", show=False),
+        Binding("tab", "tab_forward", "next section", show=False),
         Binding("up,k,shift+tab", "move(-1)", "previous section", show=False),
         Binding("pagedown", "scroll_section(1)", "scroll down", show=False),
         Binding("pageup", "scroll_section(-1)", "scroll up", show=False),
@@ -84,7 +87,12 @@ class MainScreen(Screen[None]):
                     )
                     yield Static("", id="section-blurb")
                 with ContentSwitcher(initial=self.current, id="switcher"):
-                    yield ProfileSection(self.profile, id="profile")
+                    yield ProfileSection(
+                        self.profile,
+                        self.lore,
+                        classified=not app.classified_opened,
+                        id="profile",
+                    )
                     yield EducationSection(self.profile, id="education")
                     yield SkillsSection(self.profile, id="skills")
                     yield ProjectsSection(self.profile, id="projects")
@@ -134,7 +142,8 @@ class MainScreen(Screen[None]):
         self.query_one("#section-blurb", Static).update(tint("dim", blurb))
         self.query_one(Sidebar).set_active(section_id)
         self.query_one(TabStrip).set_active(section_id)
-        self.query_one(KeyHints).set_context(section_id)
+        has_file = section_id == "profile" and self._classified_button() is not None
+        self.query_one(KeyHints).set_context("profile" if has_file else section_id)
         if section_id == "terminal":
             self.query_one(FakeShellWidget).focus_input()
         elif section_id == "projects":
@@ -155,6 +164,40 @@ class MainScreen(Screen[None]):
         ids = [spec.id for spec in self.sections]
         index = (ids.index(self.current) + delta) % len(ids)
         self.show_section(ids[index])
+
+    def action_tab_forward(self) -> None:
+        """On the profile, Tab first selects the classified file; otherwise next section."""
+        button = self._classified_button()
+        if self.current == "profile" and button is not None and not button.has_focus:
+            button.focus()
+            button.scroll_visible()
+            return
+        self.action_move(1)
+
+    def _classified_button(self) -> ClassifiedButton | None:
+        return next(iter(self.query(ClassifiedButton).results(ClassifiedButton)), None)
+
+    def open_classified(self) -> None:
+        """Play the classified walkthrough; afterwards the profile button is gone."""
+        app = snaizer_app(self)
+        app.push_screen(
+            OverwatchScreen(self.profile, self.lore, speed=app.overwatch_speed),
+            callback=self._classified_closed,
+        )
+
+    def _classified_closed(self, _result: None = None) -> None:
+        snaizer_app(self).classified_opened = True
+        button = self._classified_button()
+        if button is not None:
+            button.remove()
+        if self.current == "profile":
+            self.query_one(KeyHints).set_context("")
+            self.set_focus(None)
+
+    def on_classified_button_opened(self, message: ClassifiedButton.Opened) -> None:
+        """The visitor opened the file they were told not to."""
+        message.stop()
+        self.open_classified()
 
     def action_scroll_section(self, direction: int) -> None:
         """Scroll the current section by a page."""
@@ -205,6 +248,8 @@ class MainScreen(Screen[None]):
             self.app.exit()
         elif message.action == "matrix":
             self.action_matrix()
+        elif message.action == "classified":
+            self.open_classified()
         elif message.action == "open_project" and message.argument:
             self.open_project(message.argument)
         elif message.action == "theme" and message.argument:

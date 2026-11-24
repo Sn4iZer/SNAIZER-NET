@@ -72,3 +72,34 @@ blackice:
     - ""
     - "SYSOP NOTE :: If you are reading this, you typed 'snaizer' or 'admin' at the gate."
     - "              Congratulations. The real treasure was the dossiers you read along the way."
+
+# The "TOP SECRET" file on the profile screen and the surveillance walkthrough
+# it opens. Only the framing below is fiction; every fact shown during the
+# walkthrough comes from profile.yaml. Placeholders: {name} {handle} {projects}
+# {awards} {system} {file_id}.
+overwatch:
+  system: OVERWATCH-7
+  tagline: passive surveillance
+  file_id: 7-ALPHA
+  button_title: "TOP SECRET // EYES ONLY"
+  button_note: "unauthorized access logged"
+  alarm: [INTRUSION, DETECTED]
+  alarm_follow: [UNAUTHORIZED, FILE ACCESS]
+  online:
+    - "link established: {system} // passive surveillance"
+    - "file {file_id} unsealed"
+    - "target acquired. compiling subject profile..."
+  narration:
+    identity: ["subject identified", "alias: {handle}"]
+    education: ["training history recovered"]
+    skills: ["capability scan complete", "relative proficiency, self-assessed"]
+    projects: ["operations on record: {projects}"]
+    awards: ["recognitions intercepted: {awards}"]
+    experience: ["field activity logged"]
+    contact: ["communication channels located", "channel decryption in progress"]
+  ending:
+    - "URGENT // THIS FILE SHOULD NOT HAVE BEEN OPENED"
+    - "THREAT FOUND: high-value talent, actively learning"
+    - "RECOMMENDED ACTION: contact the subject for an interview"
+  terminated: CONNECTION TERMINATED
+  disclaimer: "// fiction: the surveillance story is made up; every fact is real"

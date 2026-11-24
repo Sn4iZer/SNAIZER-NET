@@ -21,8 +21,9 @@ class ScanLine(Widget):
     }
     """
 
-    def __init__(self, *, id: str | None = None) -> None:
+    def __init__(self, *, color: str = "cyan", id: str | None = None) -> None:
         super().__init__(id=id)
+        self.color = color
         self.frame = 0
         self._sweeping = False
 
@@ -50,4 +51,4 @@ class ScanLine(Widget):
     def render(self) -> str:
         """A bright bar with fading edges."""
         width = max(0, self.size.width - 6)
-        return tint("dim", "░▒▓") + tint("cyan", "▀" * width, "bold") + tint("dim", "▓▒░")
+        return tint("dim", "░▒▓") + tint(self.color, "▀" * width, "bold") + tint("dim", "▓▒░")

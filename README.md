@@ -73,11 +73,23 @@ Every visit opens with a boot sequence and a **fake** "neural-link" login
   - a **timeline** that merges degrees, jobs, projects and awards into one
     animated career log;
   - a sandboxed **fake shell**.
+- **The classified file**: a flickering `TOP SECRET // EYES ONLY` stamp on the
+  profile (click it, or Tab then Enter). Opening it trips a red alarm
+  (three slow flashes), a glitching `INTRUSION DETECTED` breach, then a
+  fictional surveillance AI, OVERWATCH-7, "compiles" the subject like a
+  one-minute video: a targeting reticle locks onto each block of real data
+  (identity, education, skills, projects, awards, experience, contact, where
+  the phone number decodes on screen). It ends with an urgent "this file
+  should not have been opened... contact the subject for an interview" card,
+  a countdown, and `CONNECTION TERMINATED`. Space pauses, ←/→ skip, Esc
+  leaves. Afterwards the stamp is gone for the rest of the visit; the shell
+  command `classified` replays it. The framing lives in `lore.yaml`
+  (`overwatch:`); every fact comes from `profile.yaml`.
 - **Command palette** (`/` or `Ctrl+P`): fuzzy-search sections, dossiers, tag
   filters, themes and actions (including turning animations on/off).
 - **Fake shell commands**: `help`, `whoami`, `ls`, `cd`, `pwd`, `cat`,
   `echo`, `grep`, `projects`, `open <n>`, `timeline`, `skills`, `contact`,
-  `decrypt phone`,
+  `decrypt phone`, `classified`,
   `neofetch`, `fortune`, `hack`, `history`, `matrix`, `theme`, `clear`,
   `exit` (and try `sudo`). Output streams in line by line.
 - **Themes**: `neon-night` (default), `synthwave`, `toxic-green`,
@@ -437,14 +449,16 @@ snaizer-net/
 │   ├── auth_theater.py    pure fake-login rules
 │   ├── timeline.py        merged, sorted career log + period labels
 │   ├── cipher.py          seals/unseals the phone number (obfuscation)
+│   ├── overwatch.py       the classified walkthrough as data (segments, timing)
 │   ├── palette.py         command palette provider
 │   ├── config.py · markup.py · navigation.py
-│   ├── screens/           boot · login · main · overlays (help/matrix/too-small)
+│   ├── screens/           boot · login · main · overwatch · overlays (help/matrix/too-small)
 │   ├── sections/          one pane per navigation entry
 │   ├── shell/             sandboxed fake shell (commands, vfs, tokenizer)
 │   ├── widgets/           matrix_rain · glitch_label · skill_bar · typewriter
 │   │                      fake_shell · project_card · hex_stream · nav · status_bar
 │   │                      counter · sensor_panel · scanline · ledger · decrypt_text
+│   │                      classified
 │   └── assets/ascii.py    block font + ASCII art
 ├── servers/               web.py · ssh_server.py · pty_bridge.py · limits.py · healthcheck.py
 │                          web_templates/ (page) · web_static/fonts/ (Martian Mono, OFL)

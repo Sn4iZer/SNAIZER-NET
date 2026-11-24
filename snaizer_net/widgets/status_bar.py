@@ -97,6 +97,7 @@ CONTEXT_HINTS = {
         ("exit", "quit"),
     ],
     "contact": [("d", "decrypt phone")],
+    "profile": [("TAB ENTER", "open the file")],
 }
 
 

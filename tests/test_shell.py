@@ -25,7 +25,7 @@ def test_help_lists_every_command(shell):
     text = plain(shell.execute("help"))
     for name in ("help", "whoami", "ls", "cat", "projects", "skills", "contact", "neofetch",
                  "matrix", "theme", "clear", "exit", "grep", "open", "timeline", "fortune",
-                 "hack", "history", "decrypt"):  # fmt: skip
+                 "hack", "history", "decrypt", "classified"):  # fmt: skip
         assert name in text
 
 
@@ -184,6 +184,12 @@ def test_history_records_commands(shell):
     assert shell.history == ["whoami", "ls"]
     text = plain(shell.execute("history"))
     assert "1  whoami" in text and "3  history" in text
+
+
+def test_classified_asks_the_ui_to_play_the_file(shell):
+    result = shell.execute("classified")
+    assert result.action == "classified"
+    assert "7-ALPHA" in plain(result)
 
 
 def test_tokenizer_handles_unbalanced_quotes():

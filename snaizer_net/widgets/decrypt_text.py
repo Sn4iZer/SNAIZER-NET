@@ -19,6 +19,14 @@ def sealed_mask(length: int, rng: random.Random) -> str:
     return "".join(rng.choice("▓▒░") for _ in range(length))
 
 
+def decode_markup(plain: str, locked: int, rng: random.Random) -> str:
+    """One frame of the decode effect: ``locked`` characters solved, the rest noise."""
+    if locked >= len(plain):
+        return tint("green", plain, "bold")
+    noise = "".join(" " if ch == " " else rng.choice(NOISE) for ch in plain[locked:])
+    return tint("green", plain[:locked], "bold") + tint("magenta", noise)
+
+
 class DecryptText(Static):
     """Shows block noise until :meth:`reveal` decodes ``reader()`` into place."""
 
@@ -62,10 +70,7 @@ class DecryptText(Static):
                 timer.stop()
                 self._finish(on_done)
                 return
-            noise = "".join(
-                " " if ch == " " else self._rng.choice(NOISE) for ch in self.plain[locked:]
-            )
-            self.update(tint("green", self.plain[:locked], "bold") + tint("magenta", noise))
+            self.update(decode_markup(self.plain, locked, self._rng))
 
         timer = self.set_interval(1 / ANIM_FPS, tick)
 

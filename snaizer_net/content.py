@@ -196,6 +196,36 @@ class BootLine:
     text: str
 
 
+OVERWATCH_SCENES: tuple[str, ...] = (
+    "identity",
+    "education",
+    "skills",
+    "projects",
+    "awards",
+    "experience",
+    "contact",
+)
+"""Walkthrough scenes, in playback order; each needs narration in lore.yaml."""
+
+
+@dataclass(frozen=True)
+class Overwatch:
+    """Fictional framing for the classified-file walkthrough."""
+
+    system: str
+    tagline: str
+    file_id: str
+    button_title: str
+    button_note: str
+    alarm: tuple[str, ...]
+    alarm_follow: tuple[str, ...]
+    online: tuple[str, ...]
+    narration: Mapping[str, tuple[str, ...]]
+    ending: tuple[str, ...]
+    terminated: str
+    disclaimer: str
+
+
 @dataclass(frozen=True)
 class Lore:
     """Fictional flavor text."""
@@ -215,6 +245,7 @@ class Lore:
     shell_hack: tuple[str, ...]
     blackice_title: str
     blackice_body: tuple[str, ...]
+    overwatch: Overwatch
 
 
 def default_content_dir() -> Path:
@@ -449,6 +480,29 @@ def parse_lore(data: Mapping[str, Any], source: str = "lore.yaml") -> Lore:
         shell_hack=_str_list(shell, "hack", f"{source}:shell"),
         blackice_title=_get(blackice, "title", str, f"{source}:blackice"),
         blackice_body=tuple("" if line is None else str(line) for line in body),
+        overwatch=_parse_overwatch(_get(data, "overwatch", Mapping, source), source),
+    )
+
+
+def _parse_overwatch(data: Mapping[str, Any], source: str) -> Overwatch:
+    where = f"{source}:overwatch"
+    narration_data = _get(data, "narration", Mapping, where)
+    narration = {
+        scene: _str_list(narration_data, scene, f"{where}.narration") for scene in OVERWATCH_SCENES
+    }
+    return Overwatch(
+        system=_get(data, "system", str, where),
+        tagline=_get(data, "tagline", str, where),
+        file_id=_get(data, "file_id", str, where),
+        button_title=_get(data, "button_title", str, where),
+        button_note=_get(data, "button_note", str, where),
+        alarm=_str_list(data, "alarm", where),
+        alarm_follow=_str_list(data, "alarm_follow", where),
+        online=_str_list(data, "online", where),
+        narration=narration,
+        ending=_str_list(data, "ending", where),
+        terminated=_get(data, "terminated", str, where),
+        disclaimer=_get(data, "disclaimer", str, where),
     )
 
 
