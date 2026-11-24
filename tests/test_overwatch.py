@@ -138,10 +138,9 @@ async def test_button_opens_the_walkthrough_and_then_disappears(make_app):
     async with app.run_test(size=(120, 40)) as pilot:
         await pilot.pause(0.2)
         assert "TOP SECRET // EYES ONLY" in screen_text(app)
-        app.overwatch_speed = 60
         await pilot.click("#classified")
-        await pilot.pause(0.1)
-        assert isinstance(app.screen, OverwatchScreen)
+        await wait_for(pilot, lambda: isinstance(app.screen, OverwatchScreen))
+        app.screen.speed = 60  # fast-forward only once it is open
         await wait_for(pilot, lambda: isinstance(app.screen, MainScreen))
         assert app.classified_opened
         await wait_for(pilot, lambda: not list(app.screen.query(ClassifiedButton)))

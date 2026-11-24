@@ -247,12 +247,13 @@ async def test_too_small_overlay(make_app):
     app = make_app(skip_intro=True, animations=True)
     async with app.run_test(size=(100, 30)) as pilot:
         await pilot.pause(0.1)
-        await pilot.resize_terminal(60, 18)
+        await pilot.resize_terminal(36, 16)
         await pilot.pause(0.2)
         assert isinstance(app.screen, TooSmallScreen)
         assert not app.motion_enabled
-        assert "60x18" in screen_text(app)
-        await pilot.resize_terminal(80, 24)
+        text = screen_text(app)
+        assert "now 36x16" in text and "40x18" in text
+        await pilot.resize_terminal(46, 20)  # a phone is fine
         await pilot.pause(0.2)
         assert isinstance(app.screen, MainScreen)
         assert app.motion_enabled

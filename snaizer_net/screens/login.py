@@ -15,6 +15,13 @@ from snaizer_net.widgets.hex_stream import HexStream
 from snaizer_net.widgets.motion import motion_enabled
 
 GRANTED_LINES = [[("ACCESS", "green")], [("GRANTED", "green")]]
+
+
+def _keys(*pairs: tuple[str, str]) -> str:
+    """``KEY action`` hints: cyan keys, dim actions, spaced apart."""
+    return "   ".join(f"{tint('cyan', key, 'bold')} {tint('dim', action)}" for key, action in pairs)
+
+
 SHAKE_OFFSETS = (3, -3, 2, -2, 1, 0)
 
 
@@ -31,11 +38,15 @@ class LoginScreen(Screen[None]):
         """Logo, auth box, and the hidden decrypt / granted stages."""
         with Vertical(id="login-wrap"):
             yield GlitchBanner(LOGO_LINES, id="login-logo")
+            title = tint("magenta", "NEURAL-LINK AUTHENTICATION", "bold")
+            node = tint("danger", "RESTRICTED NODE", "bold")
             yield Static(
-                tint("magenta", "NEURAL-LINK AUTHENTICATION", "bold")
-                + tint("dim", " // ")
-                + tint("danger", "RESTRICTED NODE", "bold"),
-                id="login-title",
+                f"{title}{tint('dim', ' // ')}{node}", id="login-title", classes="desktop-only"
+            )
+            yield Static(  # phones: break at the slashes, not mid-phrase
+                f"{title}{tint('dim', ' //')}\n{node}",
+                id="login-title-touch",
+                classes="pocket-only",
             )
             with Vertical(id="login-box"):
                 yield Static(tint("cyan", "IDENT ▸", "bold"), classes="login-label")
@@ -44,15 +55,14 @@ class LoginScreen(Screen[None]):
                 yield Input(placeholder="••••••", password=True, max_length=64, id="login-pass")
                 yield Static("", id="login-status")
                 yield Static(
-                    "   ".join(
-                        f"{tint('cyan', key, 'bold')} {tint('dim', action)}"
-                        for key, action in (
-                            ("ENTER", "jack in"),
-                            ("TAB", "switch field"),
-                            ("ctrl+c", "abort"),
-                        )
-                    ),
+                    _keys(("ENTER", "jack in"), ("TAB", "switch field"), ("ctrl+c", "abort")),
                     id="login-help",
+                    classes="desktop-only",
+                )
+                yield Static(
+                    _keys(("tap", "a field to type"), ("return", "jack in")),
+                    id="login-help-touch",
+                    classes="pocket-only",
                 )
             yield HexStream(id="decrypt")
             yield GlitchBanner(GRANTED_LINES, chance=0.0, id="granted")
@@ -60,7 +70,9 @@ class LoginScreen(Screen[None]):
     def on_mount(self) -> None:
         """Size the logo and focus the username field."""
         self.query_one("#login-logo", GlitchBanner).compact = True
-        self.query_one("#granted", GlitchBanner).compact = self.app.size.height < 30
+        self.query_one("#granted", GlitchBanner).compact = (
+            self.app.size.height < 30 or snaizer_app(self).pocket
+        )
         self.query_one("#decrypt").display = False
         self.query_one("#granted").display = False
         self.query_one("#login-user", Input).focus()

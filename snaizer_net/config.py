@@ -16,8 +16,11 @@ COLOR_MODES: tuple[ColorMode, ...] = ("auto", "16", "truecolor")
 ANIM_FPS = 12
 """Frame rate for every animation; kept <= 15 so SSH and web stay smooth."""
 
-MIN_WIDTH, MIN_HEIGHT = 80, 24
-"""Smallest supported terminal; below this a friendly overlay is shown."""
+MIN_WIDTH, MIN_HEIGHT = 40, 18
+"""Smallest supported terminal (a phone in portrait); below this a notice is shown."""
+
+POCKET_WIDTH = 64
+"""Below this width the app switches to its phone ("pocket") layout."""
 
 NARROW_WIDTH = 100
 """Below this width the sidebar collapses into a top tab bar."""

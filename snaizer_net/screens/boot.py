@@ -43,11 +43,11 @@ class BootScreen(Screen[None]):
             yield GlitchBanner(LOGO_LINES, chance=0.08, id="boot-logo")
             yield Static("", id="boot-log")
             yield Static("", id="boot-progress")
-            yield Static(tint("dim", "press any key to skip"), id="boot-hint")
+            yield Static(tint("dim", "press any key or tap to skip"), id="boot-hint")
 
     def on_mount(self) -> None:
         """Start streaming lines, or print everything at once without motion."""
-        self.query_one(GlitchBanner).compact = self.app.size.height < 34
+        self.query_one(GlitchBanner).compact = self.app.size.height < 34 or snaizer_app(self).pocket
         if motion_enabled(self):
             self.query_one(GlitchBanner).glitch(6)
             self._ticker = self.set_interval(LINE_INTERVAL, self._next_line)
@@ -73,29 +73,35 @@ class BootScreen(Screen[None]):
         self._render_log()
 
     def _render_log(self) -> None:
+        # Phones drop the timestamp column so each line fits on one row.
+        pocket = snaizer_app(self).pocket
+
+        def stamp_cell(stamp: float) -> str:
+            return "" if pocket else f"{tint('dim', f'[{stamp:10.6f}]')} "
+
         lines = []
         for line, stamp in zip(self.lore.boot_lines, self.stamps, strict=False):
             color = STATUS_COLORS.get(line.status, "cyan")
             lines.append(
-                f"{tint('dim', f'[{stamp:10.6f}]')} "
+                f"{stamp_cell(stamp)}"
                 f"{tint('dim', '[')}{tint(color, f'{line.status:^4}', 'bold')}{tint('dim', ']')} "
                 f"{safe(line.text)}"
             )
         if motion_enabled(self) and self.printed < len(self.lore.boot_lines):
             upcoming = self.lore.boot_lines[self.printed]
             spinner = SPINNER[self.spin_frame % len(SPINNER)]
-            stamp = time.monotonic() - self._t0
             lines.append(
-                f"{tint('dim', f'[{stamp:10.6f}]')} "
+                f"{stamp_cell(time.monotonic() - self._t0)}"
                 f"{tint('dim', '[')}{tint('magenta', f' {spinner}  ', 'bold')}{tint('dim', ']')} "
                 f"{tint('dim', upcoming.text)}"
             )
         self.query_one("#boot-log", Static).update("\n".join(lines))
         progress = self.printed / max(1, len(self.lore.boot_lines))
-        filled = round(progress * BAR_WIDTH)
+        bar_width = max(10, min(BAR_WIDTH, self.app.size.width - 20))
+        filled = round(progress * bar_width)
         self.query_one("#boot-progress", Static).update(
             f"{tint('magenta', 'LOADING', 'bold')} "
-            f"{tint('cyan', '█' * filled)}{tint('dim', '░' * (BAR_WIDTH - filled))} "
+            f"{tint('cyan', '█' * filled)}{tint('dim', '░' * (bar_width - filled))} "
             f"{tint('yellow', f'{progress:4.0%}')}"
         )
 

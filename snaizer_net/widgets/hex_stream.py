@@ -43,17 +43,21 @@ class HexStream(Static):
         timer = self.set_interval(1 / ANIM_FPS, tick)
 
     def _frame(self, progress: float) -> str:
+        # Fit the screen: "0xADDRESS  " is 10 cells, each byte 3 (phones get fewer).
+        room = (self.app.size.width or 80) - 6
+        per_row = max(4, min(BYTES_PER_ROW, (room - 10) // 3))
         rows = []
         for _ in range(ROWS):
-            self._address += BYTES_PER_ROW
+            self._address += per_row
             cells = []
-            for _ in range(BYTES_PER_ROW):
+            for _ in range(per_row):
                 byte = f"{self._rng.randrange(256):02X}"
                 cells.append(tint("green", byte) if self._rng.random() < 0.15 else byte)
             rows.append(f"{tint('dim', f'0x{self._address:06X}')}  {' '.join(cells)}")
-        width = 24
+        label = "DECRYPTING SESSION KEY" if room >= 54 else "DECRYPTING"
+        width = max(8, min(24, room - len(label) - 7))
         filled = round(progress * width)
         bar = tint("cyan", "█" * filled) + tint("dim", "░" * (width - filled))
         rows.append("")
-        rows.append(f"{tint('magenta', 'DECRYPTING SESSION KEY', 'bold')} {bar} {progress:4.0%}")
+        rows.append(f"{tint('magenta', label, 'bold')} {bar} {progress:4.0%}")
         return "\n".join(rows)

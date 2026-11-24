@@ -61,11 +61,23 @@ async def test_page_uses_local_font_and_ssh_hint():
     server = make_server(public_url="https://snaizer.example", ssh_port=22)
     async with TestClient(TestServer(await server._make_app())) as client:
         html = await (await client.get("/")).text()
-        font = await client.get("/assets/fonts/MartianMono.ttf")
+        regular = await client.get("/assets/fonts/MartianMono.ttf")
+        condensed = await client.get("/assets/fonts/MartianMono-Condensed.ttf")
     assert "fonts.googleapis.com" not in html
-    assert "/assets/fonts/MartianMono.ttf" in html
+    assert '"MartianMono.ttf"' in html and '"MartianMono-Condensed.ttf"' in html
     assert "ssh guest@snaizer.example" in html
-    assert font.status == 200
+    assert regular.status == 200 and condensed.status == 200
+
+
+async def test_page_is_set_up_for_phones():
+    server = make_server(public_url="https://snaizer.example")
+    async with TestClient(TestServer(await server._make_app())) as client:
+        html = await (await client.get("/")).text()
+    assert "viewport-fit=cover" in html
+    assert "snaizer:keyboard/" in html  # the app's keyboard requests are intercepted
+    assert "visualViewport" in html  # resize above the phone keyboard
+    assert '"touchmove"' in html  # swipe to scroll
+    assert "font-size: 16px !important" in html  # no iOS zoom on focus
 
 
 async def test_session_cap_returns_503():

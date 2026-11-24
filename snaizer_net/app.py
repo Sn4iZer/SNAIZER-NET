@@ -6,8 +6,9 @@ from textual import events
 from textual.app import App
 from textual.binding import Binding
 from textual.screen import Screen
+from textual.widgets import Input
 
-from snaizer_net.config import MIN_HEIGHT, MIN_WIDTH, RunConfig
+from snaizer_net.config import MIN_HEIGHT, MIN_WIDTH, POCKET_WIDTH, RunConfig
 from snaizer_net.content import Lore, Profile
 from snaizer_net.palette import SnaizerCommands
 from snaizer_net.screens.boot import BootScreen
@@ -22,6 +23,9 @@ from snaizer_net.themes import (
     is_low_color_terminal,
     theme_variables,
 )
+
+KEYBOARD_URL = "snaizer:keyboard"
+"""Pseudo-URL the web page intercepts to show/hide the phone keyboard."""
 
 
 class SnaizerApp(App[None]):
@@ -46,6 +50,7 @@ class SnaizerApp(App[None]):
         """The profile's classified file was opened this visit (its button is gone)."""
         self.overwatch_speed = 1.0
         """Playback speed of the classified walkthrough (tests raise it)."""
+        self._keyboard_wanted = False
         for theme in all_themes():
             self.register_theme(theme)
         self.theme = self.initial_theme()
@@ -91,10 +96,34 @@ class SnaizerApp(App[None]):
         self._check_size(*self.size)
 
     def on_resize(self, event: events.Resize) -> None:
-        """Show / hide the "enlarge your terminal" overlay."""
+        """Switch between desktop and pocket layouts, or show the "too small" notice."""
         self._check_size(*event.size)
 
+    @property
+    def pocket(self) -> bool:
+        """True on phone-sized terminals (the pocket layout is active)."""
+        return self.has_class("-pocket")
+
+    # -- on-screen keyboard (web build on phones) -------------------------
+    # The page keeps the phone keyboard closed unless the app focuses a text
+    # field; it learns that through these ``snaizer:`` pseudo-URLs.
+
+    def on_descendant_focus(self, event: events.DescendantFocus) -> None:
+        """A text field gained focus: let the page open the phone keyboard."""
+        self._signal_keyboard(isinstance(event.widget, Input))
+
+    def on_descendant_blur(self, event: events.DescendantBlur) -> None:
+        """Focus left a text field: let the page close the phone keyboard."""
+        if isinstance(event.widget, Input) and not isinstance(self.focused, Input):
+            self._signal_keyboard(False)
+
+    def _signal_keyboard(self, wanted: bool) -> None:
+        if self.config.is_web and wanted != self._keyboard_wanted:
+            self._keyboard_wanted = wanted
+            self.open_url(f"{KEYBOARD_URL}/{'on' if wanted else 'off'}", new_tab=False)
+
     def _check_size(self, width: int, height: int) -> None:
+        self.set_class(width < POCKET_WIDTH, "-pocket")
         too_small = width < MIN_WIDTH or height < MIN_HEIGHT
         if too_small and not self._too_small:
             self._too_small = True

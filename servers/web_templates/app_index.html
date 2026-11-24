@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>{{ application.name or 'SNAIZER//NET' }}</title>
     <meta
       name="description"
@@ -15,24 +15,35 @@
     />
     <meta property="og:type" content="website" />
     <meta name="theme-color" content="#0a0a12" />
+    <!-- Added to a phone's home screen, it opens full screen without browser bars. -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="SNAIZER//NET" />
     <link
       rel="icon"
       type="image/svg+xml"
       href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='10' fill='%230a0a12'/%3E%3Cpath d='M44 14H22a8 8 0 0 0 0 16h20a8 8 0 0 1 0 16H18' fill='none' stroke='%2300f0ff' stroke-width='7' stroke-linecap='square'/%3E%3Cpath d='M50 10 40 54' stroke='%23ff2bd6' stroke-width='4'/%3E%3C/svg%3E"
     />
-    <link rel="preload" href="/assets/fonts/MartianMono.ttf" as="font" type="font/ttf" crossorigin />
     <link rel="stylesheet" href="{{ config.static.url }}css/xterm.css" />
+    <script>
+      // textual.js hard-codes "Roboto Mono" for the terminal; we register
+      // Martian Mono (OFL, served locally) under that name. Phones get the
+      // condensed cut so more columns fit at a readable size.
+      window.SNZ = (function () {
+        const small = Math.min(screen.width, screen.height) < 600;
+        const touch = window.matchMedia("(pointer: coarse)").matches;
+        const file = small ? "MartianMono-Condensed.ttf" : "MartianMono.ttf";
+        const face = new FontFace("Roboto Mono", "url(/assets/fonts/" + file + ")", {
+          weight: "100 800",
+          display: "block",
+        });
+        document.fonts.add(face);
+        return { small: small, touch: touch, fontReady: face.load().catch(function () {}) };
+      })();
+    </script>
     <script src="{{ config.static.url }}js/textual.js"></script>
     <style>
-      /* textual.js hard-codes "Roboto Mono" for the terminal; we serve Martian
-         Mono (OFL) under that name so the whole page uses one local typeface. */
-      @font-face {
-        font-family: "Roboto Mono";
-        src: url("/assets/fonts/MartianMono.ttf") format("truetype");
-        font-weight: 100 800;
-        font-display: block;
-      }
-
       :root {
         --void: #0a0a12;
         --slab: #10101c;
@@ -41,6 +52,7 @@
         --text: #d6e4ff;
         --dim: #6b7a99;
         --mono: "Roboto Mono", ui-monospace, Menlo, Consolas, monospace;
+        --app-height: 100dvh;
       }
 
       html,
@@ -50,6 +62,16 @@
         background: var(--void);
         color: var(--text);
         font: 15px/1.6 var(--mono);
+        -webkit-text-size-adjust: 100%;
+      }
+
+      body {
+        /* no rubber-band scrolling or pull-to-refresh: the app scrolls itself */
+        position: fixed;
+        inset: 0;
+        overflow: hidden;
+        overscroll-behavior: none;
+        touch-action: manipulation;
       }
 
       /* Pre-connection and post-disconnect states read like the terminal
@@ -58,7 +80,8 @@
         position: absolute;
         inset: 0;
         z-index: 10;
-        padding: 2rem 2.25rem;
+        padding: calc(2rem + env(safe-area-inset-top)) calc(2.25rem + env(safe-area-inset-right))
+          2rem calc(2.25rem + env(safe-area-inset-left));
         background: var(--void);
       }
 
@@ -92,27 +115,30 @@
         }
       }
 
-      @media (prefers-reduced-motion: reduce) {
-        .cursor {
-          animation: none;
-        }
-        body .textual-terminal {
-          transition: none !important;
-        }
-      }
-
       body.-first-byte .intro {
         display: none;
       }
 
+      /* The terminal fills the visible area (above the phone keyboard when it
+         is open) inside the notch-safe insets. */
       body .textual-terminal {
-        height: 100vh;
+        position: absolute;
+        top: env(safe-area-inset-top);
+        right: env(safe-area-inset-right);
+        left: env(safe-area-inset-left);
+        height: calc(var(--app-height) - env(safe-area-inset-top) - env(safe-area-inset-bottom));
         opacity: 0;
         transition: opacity 0.25s ease-out;
       }
 
       body.-first-byte .textual-terminal {
         opacity: 1;
+      }
+
+      /* iOS zooms into inputs under 16px when they get focus; this is the
+         hidden field that receives typing. */
+      .xterm .xterm-helper-textarea {
+        font-size: 16px !important;
       }
 
       .closed {
@@ -161,6 +187,35 @@
       #start.-delay {
         display: inline-block;
       }
+
+      /* Phones: shown when the app is waiting for text but the keyboard is
+         closed. Tapping it opens the keyboard. */
+      #type-pill {
+        position: fixed;
+        right: calc(12px + env(safe-area-inset-right));
+        bottom: calc(env(safe-area-inset-bottom) + var(--pill-offset, 16px));
+        z-index: 20;
+        display: none;
+        padding: 0.55rem 0.9rem;
+        font-size: 14px;
+        color: var(--void);
+        background: var(--signal);
+        border-radius: 999px;
+        box-shadow: 0 0 0 1px var(--void);
+      }
+
+      body.-wants-keyboard:not(.-keyboard-open) #type-pill {
+        display: block;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .cursor {
+          animation: none;
+        }
+        body .textual-terminal {
+          transition: none;
+        }
+      }
     </style>
     <script>
       function getStartUrl() {
@@ -203,35 +258,164 @@
       data-font-size="{{ font_size }}"
     ></div>
 
-    <script>
-      // textual.js starts on window.onload. Wait for the font first (cell
-      // metrics are measured once), and on small screens shrink the font so
-      // the 80x24 minimum layout fits, unless ?fontsize= was given.
-      (function () {
-        const start = window.onload;
-        const terminal = document.getElementById("terminal");
-        const MIN_COLS = 82;
-        const MIN_ROWS = 25;
+    <button type="button" id="type-pill" aria-label="Show keyboard">⌨ Tap to type</button>
 
-        function fittedSize() {
+    <script>
+      (function () {
+        const SNZ = window.SNZ;
+        const terminal = document.getElementById("terminal");
+        const pill = document.getElementById("type-pill");
+        const start = window.onload; // set by textual.js
+        let fontSize = 16;
+
+        // -- font size ------------------------------------------------------
+        // Desktop: at least 82x25 cells. Phones: the app's pocket layout needs
+        // about 44 columns, so the text can stay large enough to read.
+        function advance() {
           const probe = document.createElement("canvas").getContext("2d");
           probe.font = '100px "Roboto Mono"';
-          const advance = probe.measureText("M").width / 100 || 0.62;
-          const byWidth = window.innerWidth / (MIN_COLS * advance);
-          const byHeight = window.innerHeight / (MIN_ROWS * 1.25);
-          return Math.max(8, Math.min(16, Math.floor(Math.min(byWidth, byHeight))));
+          return probe.measureText("M").width / 100 || 0.62;
         }
 
-        window.onload = async function (event) {
-          try {
-            await document.fonts.load('16px "Roboto Mono"');
-          } catch (error) {
-            /* fall back to the next font in the stack */
+        function fittedSize() {
+          const width = terminal.clientWidth || window.innerWidth;
+          const height = terminal.clientHeight || window.innerHeight;
+          const [cols, rows, largest, smallest] = SNZ.small ? [44, 20, 16, 10] : [82, 25, 16, 8];
+          const adv = advance();
+          for (let size = largest; size > smallest; size--) {
+            if (width / (size * adv) >= cols && height / (size * 1.25) >= rows) return size;
           }
+          return smallest;
+        }
+
+        function cellHeight() {
+          return fontSize * 1.2;
+        }
+
+        // -- messages from the app ------------------------------------------
+        // The app asks for the phone keyboard through "snaizer:" pseudo-URLs
+        // (textual-serve delivers them via window.open). Intercept them on
+        // every device so they never navigate away.
+        let wantsKeyboard = false;
+        const nativeOpen = window.open.bind(window);
+        window.open = function (url, target, features) {
+          if (typeof url === "string" && url.indexOf("snaizer:keyboard/") === 0) {
+            wantsKeyboard = url.slice(-3) === "/on";
+            if (SNZ.touch) applyKeyboard();
+            return null;
+          }
+          return nativeOpen(url, target, features);
+        };
+
+        function helperTextarea() {
+          return document.querySelector(".xterm-helper-textarea");
+        }
+
+        // Phones: keep the keyboard closed unless the app focused a text field,
+        // so tapping menus and buttons doesn't pop it up.
+        function applyKeyboard() {
+          const field = helperTextarea();
+          document.body.classList.toggle("-wants-keyboard", wantsKeyboard);
+          if (!field) return;
+          field.setAttribute("inputmode", wantsKeyboard ? "text" : "none");
+          if (!wantsKeyboard && document.activeElement === field) field.blur();
+        }
+
+        pill.addEventListener("click", function () {
+          const field = helperTextarea();
+          if (!field) return;
+          field.setAttribute("inputmode", "text");
+          field.focus(); // inside the tap, so iOS opens the keyboard
+        });
+
+        // -- visible area ---------------------------------------------------
+        // iOS overlays the keyboard instead of resizing the page, so size the
+        // terminal to the visual viewport and let textual.js refit.
+        let refitTimer = 0;
+        function fitViewport() {
+          const viewport = window.visualViewport;
+          const height = viewport ? viewport.height : window.innerHeight;
+          document.documentElement.style.setProperty("--app-height", height + "px");
+          const open = viewport ? viewport.height < window.innerHeight * 0.8 : false;
+          document.body.classList.toggle("-keyboard-open", open);
+          window.scrollTo(0, 0);
+          clearTimeout(refitTimer);
+          refitTimer = setTimeout(function () {
+            window.dispatchEvent(new Event("resize")); // textual.js refits on resize
+          }, 60);
+        }
+
+        // -- swipe to scroll ------------------------------------------------
+        // The app tracks the mouse, so xterm ignores touch scrolling; turn a
+        // vertical swipe into wheel events at the finger's position.
+        function enableSwipe() {
+          let lastY = null;
+          let pending = 0;
+          terminal.addEventListener(
+            "touchstart",
+            function (event) {
+              lastY = event.touches.length === 1 ? event.touches[0].clientY : null;
+              pending = 0;
+            },
+            { passive: true, capture: true }
+          );
+          terminal.addEventListener(
+            "touchmove",
+            function (event) {
+              if (lastY === null || event.touches.length !== 1) return;
+              const touch = event.touches[0];
+              pending += lastY - touch.clientY;
+              lastY = touch.clientY;
+              const step = cellHeight() * 2; // one wheel notch scrolls about two lines
+              const notches = Math.trunc(pending / step);
+              if (notches) {
+                pending -= notches * step;
+                const target = document.elementFromPoint(touch.clientX, touch.clientY) || terminal;
+                for (let i = 0; i < Math.abs(notches); i++) {
+                  target.dispatchEvent(
+                    new WheelEvent("wheel", {
+                      deltaY: Math.sign(notches) * 100,
+                      clientX: touch.clientX,
+                      clientY: touch.clientY,
+                      bubbles: true,
+                      cancelable: true,
+                    })
+                  );
+                }
+              }
+              event.preventDefault();
+            },
+            { passive: false, capture: true }
+          );
+          terminal.addEventListener(
+            "touchend",
+            function () {
+              lastY = null;
+            },
+            { passive: true, capture: true }
+          );
+        }
+
+        // -- start ----------------------------------------------------------
+        window.onload = async function (event) {
+          await SNZ.fontReady;
+          if (SNZ.touch) fitViewport();
           if (!new URLSearchParams(window.location.search).has("fontsize")) {
-            terminal.dataset.fontSize = String(fittedSize());
+            fontSize = fittedSize();
+            terminal.dataset.fontSize = String(fontSize);
+          } else {
+            fontSize = parseInt(terminal.dataset.fontSize, 10) || 16;
           }
           if (start) start.call(window, event);
+          if (SNZ.touch) {
+            document.documentElement.style.setProperty(
+              "--pill-offset",
+              Math.round(cellHeight() * 5) + "px"
+            );
+            applyKeyboard();
+            enableSwipe();
+            if (window.visualViewport) window.visualViewport.addEventListener("resize", fitViewport);
+          }
         };
       })();
     </script>

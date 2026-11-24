@@ -10,7 +10,7 @@ import time
 
 from textual.app import ComposeResult
 from textual.binding import Binding
-from textual.containers import Vertical
+from textual.containers import Horizontal, Vertical
 from textual.screen import Screen
 from textual.widgets import Static
 
@@ -43,6 +43,43 @@ COUNTDOWN_START, COUNTDOWN_FROM = 2.0, 5
 SHORT_HEIGHT = 30
 """Below this terminal height the stage drops its vertical padding."""
 NOISE = "▓▒░"
+
+
+CONTROLS: dict[str, tuple[str, str, str]] = {
+    # name: (key hint, icon, label)
+    "pause": ("space", "❚❚", "pause"),
+    "prev": ("←", "‹", "prev"),
+    "next": ("→", "›", "next"),
+    "exit": ("esc", "✕", "exit"),
+}
+
+
+class ControlButton(Static):
+    """A tappable playback control (phones have no Space, arrow or Esc keys)."""
+
+    def __init__(self, name: str) -> None:
+        super().__init__(id=f"ow-{name}", classes="ow-control")
+        self.control = name
+
+    def draw(self, *, paused: bool, keys: bool) -> None:
+        """Render the label; the pause button flips to "play" while paused."""
+        key, icon, label = CONTROLS[self.control]
+        if self.control == "pause" and paused:
+            icon, label = "▶", "play"
+        hint = f"{tint('dim', key)} " if keys else ""
+        self.update(f"{hint}{tint('cyan', icon + ' ' + label, 'bold')}")
+
+    def on_click(self) -> None:
+        """Run the matching screen action."""
+        screen = self.screen
+        if not isinstance(screen, OverwatchScreen):
+            return
+        if self.control == "pause":
+            screen.action_toggle_pause()
+        elif self.control == "exit":
+            screen.action_leave()
+        else:
+            screen.action_skip(-1 if self.control == "prev" else 1)
 
 
 def _clamp(value: float) -> float:
@@ -81,12 +118,16 @@ class OverwatchScreen(Screen[None]):
     # -- lifecycle -------------------------------------------------------
 
     def compose(self) -> ComposeResult:
-        """Header, stage (with a scanline overlay) and footer."""
+        """Header, stage (with a scanline overlay) and a footer with tap controls."""
         yield Static("", id="ow-header")
         with Vertical(id="ow-stage-wrap"):
             yield Static("", id="ow-stage")
             yield ScanLine(color="danger", id="ow-scan")
-        yield Static("", id="ow-footer")
+        with Vertical(id="ow-footer"):
+            yield Static("", id="ow-progress")
+            with Horizontal(id="ow-controls"):
+                for name in CONTROLS:
+                    yield ControlButton(name)
 
     def on_mount(self) -> None:
         """Start the clock (slowly when animations are off: frames are static)."""
@@ -145,8 +186,8 @@ class OverwatchScreen(Screen[None]):
 
     def render_frame(self) -> None:
         """Draw the current moment of the walkthrough."""
-        if self.closing:
-            return
+        if self.closing or not self.query("#ow-stage"):
+            return  # closing, or not composed yet (a seek before then just moves the clock)
         index, local = self.timeline.locate(self.elapsed)
         segment = self.timeline.segments[index]
         if index != self.index:
@@ -172,7 +213,7 @@ class OverwatchScreen(Screen[None]):
             body = self._ending(segment, local, width, height)
         stage.update(body)
         self.query_one("#ow-header", Static).update(self._header(segment, index))
-        self.query_one("#ow-footer", Static).update(self._footer())
+        self._footer()
 
     def _header(self, segment: Segment, index: int) -> str:
         ow = self.lore.overwatch
@@ -182,28 +223,25 @@ class OverwatchScreen(Screen[None]):
             rec = tint("danger", "◉ REC", "bold")
         else:
             rec = tint("dim", "◉ REC")
-        left = f"{rec}  {tint('danger', ow.system, 'bold')} {tint('dim', '// ' + ow.tagline)}"
+        pocket = self.app.has_class("-pocket")
+        tagline = "" if pocket else f" {tint('dim', '// ' + ow.tagline)}"
+        left = f"{rec}  {tint('danger', ow.system, 'bold')}{tagline}"
         number = self.timeline.scene_number(index)
         scenes = len(self.timeline.scenes)
         where = f"SCENE {number}/{scenes} // {segment.title}" if number else segment.id.upper()
-        right = (
-            f"{tint('dim', 'FILE')} {tint('yellow', ow.file_id)}   {tint('text', where, 'bold')}"
-        )
-        return f"{left}\n{right}"
+        file_id = "" if pocket else f"{tint('dim', 'FILE')} {tint('yellow', ow.file_id)}   "
+        return f"{left}\n{file_id}{tint('text', where, 'bold')}"
 
-    def _footer(self) -> str:
+    def _footer(self) -> None:
         total = self.timeline.total
         clock = f"{_mmss(self.elapsed)} / {_mmss(total)}"
-        hints = "space pause  ←→ skip  esc exit"
         width = max(20, self.app.size.width - 4)
-        bar_width = max(10, width - len(clock) - len(hints) - 6)
+        bar_width = max(10, width - len(clock) - 1)
         filled = round(_clamp(self.elapsed / total) * bar_width)
         bar = tint("danger", "█" * filled) + tint("dim", "░" * (bar_width - filled))
-        keys = "  ".join(
-            f"{tint('cyan', key, 'bold')} {tint('dim', label)}"
-            for key, label in (("space", "pause"), ("←→", "skip"), ("esc", "exit"))
-        )
-        return f"{bar} {tint('text', clock)}   {keys}"
+        self.query_one("#ow-progress", Static).update(f"{bar} {tint('text', clock)}")
+        for button in self.query(ControlButton):
+            button.draw(paused=self.paused, keys=not self.app.has_class("-pocket"))
 
     def _center(self, rows: list[str], plain_widths: list[int], width: int, height: int) -> str:
         top = max(0, (height - len(rows)) // 2)
@@ -221,8 +259,10 @@ class OverwatchScreen(Screen[None]):
             glyphs = render_banner(word, compact=True)
             if len(glyphs[0]) <= width:
                 rows += [(row, len(row)) for row in glyphs]
-            else:
-                rows.append((word, len(word)))
+            else:  # phones: letter-spaced text keeps the alarm's weight
+                spaced = " ".join(word)
+                text = spaced if len(spaced) <= width else word
+                rows.append((text, len(text)))
         return rows
 
     def _breach(self, local: float, width: int, height: int) -> str:
@@ -293,7 +333,9 @@ class OverwatchScreen(Screen[None]):
         )
         narration = self._typed_lines(segment.narration, progress / LOCK_END)
 
-        rows = layout(segment.facts, max(18, min(width - 6, 74)))
+        rows = layout(
+            segment.facts, max(18, min(width - 6, 74)), stack=self.app.has_class("-pocket")
+        )
         # the reticle hugs the data it locks onto
         inner = max(30, min(width - 4, max(len(row) for row in rows) + 4))
         # rows left for facts: minus narration, the two reticle rows and a spacer

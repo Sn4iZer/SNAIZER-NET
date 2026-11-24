@@ -53,7 +53,8 @@ LoginScreen {
     align-horizontal: center;
 }
 
-#login-title {
+#login-title,
+#login-title-touch {
     width: auto;
     margin: 1 0;
 }
@@ -333,6 +334,18 @@ MainScreen.-narrow #section-head {
 #profile-now {
     height: auto;
     margin-bottom: 1;
+}
+
+.now-row {
+    height: auto;
+}
+
+.now-label {
+    width: 11;
+}
+
+.now-value {
+    width: 1fr;
 }
 
 /* the file you shouldn't open: heavy red frame, slow flicker (-dim) */
@@ -639,9 +652,40 @@ OverwatchScreen.-alarm {
 
 #ow-footer {
     dock: bottom;
-    height: 2;
+    height: 3;
     padding: 0 2;
     border-top: hkey $neon-danger 60%;
+}
+
+#ow-progress,
+#ow-controls {
+    height: 1;
+}
+
+.ow-control {
+    width: auto;
+    margin-right: 3;
+}
+
+.ow-control:hover {
+    background: $neon-cyan 15%;
+}
+
+/* phones: four equal tap zones, two rows tall */
+App.-pocket #ow-footer {
+    height: 4;
+    padding: 0 1;
+}
+
+App.-pocket #ow-controls {
+    height: 2;
+}
+
+App.-pocket .ow-control {
+    width: 1fr;
+    height: 2;
+    margin: 0;
+    content-align: center middle;
 }
 
 OverwatchScreen.-breach #ow-header,
@@ -712,4 +756,224 @@ TooSmallScreen {
     padding: 1 2;
     text-align: center;
     border: round $neon-danger;
+}
+
+/* ---------------------------------------------------------------- pocket -- */
+/* Phone-sized terminals (App.-pocket, under 64 columns): one column, big tap
+ * targets, a bottom dock instead of keyboard hints. Desktop rules above stay
+ * untouched; everything here only narrows or stacks them. */
+
+.pocket-only {
+    display: none;
+}
+
+App.-pocket .pocket-only {
+    display: block;
+}
+
+App.-pocket .desktop-only {
+    display: none;
+}
+
+/* navigation: dock + menu replace the tab strip and key hints */
+
+#dock {
+    display: none;
+    dock: bottom;
+    height: 4;
+    background: $neon-panel;
+    border-top: hkey $neon-magenta 60%;
+}
+
+App.-pocket #dock {
+    display: block;
+}
+
+App.-pocket #tabstrip,
+App.-pocket #key-hints {
+    display: none;
+}
+
+.dock-button {
+    width: 1fr;
+    height: 3;
+    content-align: center middle;
+}
+
+.dock-button:hover {
+    background: $neon-cyan 12%;
+}
+
+#dock-menu {
+    border-left: vkey $neon-dim 30%;
+    border-right: vkey $neon-dim 30%;
+}
+
+MenuScreen {
+    background: $neon-bg 92%;
+}
+
+#menu-box {
+    margin: 1 1;
+    padding: 0 1;
+    background: $neon-panel;
+    border: round $neon-magenta;
+}
+
+#menu-head {
+    height: 1;
+    margin-bottom: 1;
+}
+
+#menu-title {
+    width: 1fr;
+}
+
+.menu-close {
+    width: auto;
+    height: 1;
+}
+
+.menu-close .menu-item-title,
+.menu-action .menu-item-title {
+    width: auto;
+}
+
+.menu-item {
+    height: auto;
+    padding: 0 1;
+    margin-bottom: 1;
+    border-left: outer $neon-dim 30%;
+}
+
+.menu-item-title,
+.menu-item-note {
+    height: auto;
+}
+
+.menu-item-note {
+    padding-left: 3;
+}
+
+.menu-item:hover,
+.menu-item.-active {
+    background: $neon-cyan 12%;
+    border-left: outer $neon-cyan;
+}
+
+.menu-item.-admin {
+    border-left: outer $neon-yellow 60%;
+}
+
+#menu-actions {
+    height: auto;
+    margin-bottom: 1;
+}
+
+.menu-action {
+    width: 1fr;
+    height: 3;
+    align: center middle;
+    border: round $neon-dim 40%;
+}
+
+.menu-action:hover {
+    border: round $neon-cyan;
+}
+
+/* boot + login */
+
+App.-pocket #boot-wrap {
+    padding: 1 1;
+}
+
+#login-wrap,
+#login-box {
+    max-width: 100%;
+}
+
+App.-pocket #login-wrap {
+    width: 100%;
+    padding: 0 1;
+}
+
+App.-pocket #login-box {
+    width: 100%;
+    padding: 0 1;
+}
+
+
+
+/* content */
+
+App.-pocket #pane {
+    padding: 0 1;
+}
+
+App.-pocket .ledger {
+    layout: vertical;
+}
+
+App.-pocket .ledger-when {
+    width: auto;
+    padding: 0;
+    text-align: left;
+}
+
+App.-pocket .ledger-body {
+    padding-left: 1;
+}
+
+App.-pocket .skill-group {
+    padding-left: 0;
+}
+
+#classified {
+    max-width: 100%;
+}
+
+App.-pocket #profile-stats {
+    layout: grid;
+    grid-size: 2;
+    grid-gutter: 0 1;
+}
+
+App.-pocket .stat {
+    width: 1fr;
+    margin-right: 0;
+}
+
+App.-pocket #dossier {
+    padding: 0 1;
+}
+
+App.-pocket #contact-actions {
+    layout: vertical;
+}
+
+App.-pocket #contact-actions Button {
+    width: 100%;
+    height: 3;
+    margin: 0 0 1 0;
+    content-align: center middle;
+    border: round $neon-cyan 40%;
+}
+
+App.-pocket #contact-actions #decrypt-phone {
+    border: round $neon-magenta 60%;
+}
+
+App.-pocket .contact-row {
+    layout: vertical;
+    margin-bottom: 1;
+}
+
+App.-pocket .contact-label,
+App.-pocket .contact-value {
+    width: 100%;
+}
+
+App.-pocket #help-box {
+    width: 100%;
+    margin: 0 1;
 }

@@ -1,5 +1,7 @@
 """Section widgets. Every fact comes from :class:`~snaizer_net.content.Profile`."""
 
+import textwrap
+
 from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Horizontal, Vertical, VerticalScroll
@@ -82,13 +84,11 @@ class ProfileSection(Section):
             id="profile-name",
         )
         yield Typewriter(ident.bio, id="bio")
-        yield Static(
-            "\n".join(
-                f"{tint('dim', label.ljust(10))} {markup}"
-                for label, markup in now_readout(self.profile)
-            ),
-            id="profile-now",
-        )
+        with Vertical(id="profile-now"):
+            for label, markup in now_readout(self.profile):
+                with Horizontal(classes="now-row"):
+                    yield Static(tint("dim", label), classes="now-label")
+                    yield Static(markup, classes="now-value")
         if self.classified:
             yield ClassifiedButton(self.lore.overwatch, id="classified")
         stats = [
@@ -119,11 +119,12 @@ class TimelineSection(Section):
 
     def compose(self) -> ComposeResult:
         """Legend and the timeline body."""
-        legend = "   ".join(
-            f"{tint(KIND_COLOR[kind], KIND_GLYPH[kind])} {tint('dim', kind)}" for kind in KIND_COLOR
-        )
-        yield Static(legend, classes="caption")
+        yield Static("", id="timeline-legend", classes="caption")
         yield Static("", id="timeline-body")
+
+    def on_mount(self) -> None:
+        """Draw the legend for the current width."""
+        self._draw_legend()
 
     def on_show(self) -> None:
         """Replay the reveal each time the section opens."""
@@ -147,6 +148,9 @@ class TimelineSection(Section):
         timer = self.set_interval(1 / ANIM_FPS, tick)
 
     def _draw(self) -> None:
+        if self.app.has_class("-pocket"):
+            self._draw_stacked()
+            return
         width = max((len(entry.when) for entry in self.entries), default=4)
         lines: list[str] = []
         for index, entry in enumerate(self.entries[: self.revealed]):
@@ -161,6 +165,33 @@ class TimelineSection(Section):
                 f"{' ' * width}  {tint('dim', ' ' if last else '│')}   {tint('dim', entry.detail)}"
             )
         self.query_one("#timeline-body", Static).update("\n".join(lines))
+
+    def _draw_stacked(self) -> None:
+        """Phone layout: the date on its own line, the entry indented under it."""
+        width = max(16, self.query_one("#timeline-body").size.width - 2)
+        lines: list[str] = []
+        for entry in self.entries[: self.revealed]:
+            color = KIND_COLOR[entry.kind]
+            lines.append(f"{tint(color, KIND_GLYPH[entry.kind])} {tint('yellow', entry.when)}")
+            lines += [f"  {tint(color, row, 'bold')}" for row in textwrap.wrap(entry.title, width)]
+            lines += [f"  {tint('dim', row)}" for row in textwrap.wrap(entry.detail, width)]
+            lines.append("")
+        self.query_one("#timeline-body", Static).update("\n".join(lines))
+
+    def on_resize(self) -> None:
+        """Re-wrap for the new width (phones rotate)."""
+        self._draw()
+        self._draw_legend()
+
+    def _draw_legend(self) -> None:
+        items = [
+            f"{tint(KIND_COLOR[kind], KIND_GLYPH[kind])} {tint('dim', kind)}" for kind in KIND_COLOR
+        ]
+        if self.app.has_class("-pocket"):  # two per line on phones
+            legend = "\n".join("   ".join(items[i : i + 2]) for i in range(0, len(items), 2))
+        else:
+            legend = "   ".join(items)
+        self.query_one("#timeline-legend", Static).update(legend)
 
 
 class EducationSection(Section):

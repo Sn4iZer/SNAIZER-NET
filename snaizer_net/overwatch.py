@@ -257,23 +257,44 @@ def wrap_cells(cells: list[Cell], width: int, indent: int = 0) -> list[list[Cell
     indent = min(indent, width // 2)
     pad: list[Cell] = [(" ", "text", "")] * indent
     lines: list[list[Cell]] = []
+    floor = 0  # cuts must land after this index (past the indent on continuation lines)
     while len(cells) > width:
-        cut = next((i for i in range(width, 0, -1) if cells[i][0] == " "), width)
+        # Break at the last space that leaves real text on this line; a word too
+        # long for the line is hard-cut, so every pass makes progress.
+        cut = next((i for i in range(width, floor, -1) if cells[i][0] == " "), width)
         lines.append(cells[:cut])
         cells = cells[cut:]
         while cells and cells[0][0] == " ":
             cells = cells[1:]
         cells = pad + cells
+        floor = indent
     lines.append(cells)
     return lines
 
 
-def layout(facts: Sequence[Sequence[Span]], width: int) -> list[list[Cell]]:
-    """Wrap every fact line to ``width``, hanging under its first column."""
+STACK_INDENT = 2
+"""Indent of a value moved under its label by ``layout(stack=True)``."""
+
+
+def layout(facts: Sequence[Sequence[Span]], width: int, stack: bool = False) -> list[list[Cell]]:
+    """Wrap every fact line to ``width``, hanging under its first column.
+
+    With ``stack`` (phones), a value that won't fit beside its label column
+    moves under it: ``email`` / ``  mohammedtchichi03@gmail.com``. Rows whose
+    first column is blank padding simply lose it.
+    """
     rows: list[list[Cell]] = []
     for line in facts:
         indent = len(line[0][0]) if len(line) > 1 else 0
-        rows += wrap_cells(to_cells(line), width, indent)
+        rest = sum(len(text) for text, _, _ in line[1:])
+        if stack and indent and rest > width - indent:
+            label = line[0][0].rstrip()
+            if label:
+                rows.append(to_cells([(label, *line[0][1:])]))
+            pad: Span = (" " * STACK_INDENT, "text", "")
+            rows += wrap_cells(to_cells([pad, *line[1:]]), width, STACK_INDENT)
+        else:
+            rows += wrap_cells(to_cells(line), width, indent)
     return rows
 
 

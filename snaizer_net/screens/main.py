@@ -13,7 +13,7 @@ from snaizer_net.content import Lore, Profile
 from snaizer_net.markup import tint
 from snaizer_net.navigation import SECTIONS, visible_sections
 from snaizer_net.screens._app import snaizer_app
-from snaizer_net.screens.overlays import HelpScreen, MatrixScreen
+from snaizer_net.screens.overlays import HelpScreen, MatrixScreen, MenuScreen
 from snaizer_net.screens.overwatch import OverwatchScreen
 from snaizer_net.sections import (
     AwardsSection,
@@ -30,6 +30,7 @@ from snaizer_net.sections import (
 from snaizer_net.shell.commands import FakeShell
 from snaizer_net.themes import USER_THEMES
 from snaizer_net.widgets.classified import ClassifiedButton
+from snaizer_net.widgets.dock import PocketDock
 from snaizer_net.widgets.fake_shell import FakeShellWidget
 from snaizer_net.widgets.glitch_label import GlitchLabel
 from snaizer_net.widgets.nav import NavItem, Sidebar, TabStrip
@@ -105,6 +106,7 @@ class MainScreen(Screen[None]):
                         yield BlackIceSection(self.lore, id="blackice")
                 yield ScanLine(id="scanline")  # last child, so it draws on top
         yield KeyHints(id="key-hints")
+        yield PocketDock(self.sections, id="dock")
 
     def on_mount(self) -> None:
         """Apply the layout for the current width and show the first section."""
@@ -142,6 +144,7 @@ class MainScreen(Screen[None]):
         self.query_one("#section-blurb", Static).update(tint("dim", blurb))
         self.query_one(Sidebar).set_active(section_id)
         self.query_one(TabStrip).set_active(section_id)
+        self.query_one(PocketDock).set_current(section_id)
         has_file = section_id == "profile" and self._classified_button() is not None
         self.query_one(KeyHints).set_context("profile" if has_file else section_id)
         if section_id == "terminal":
@@ -239,6 +242,35 @@ class MainScreen(Screen[None]):
     def on_nav_item_selected(self, message: NavItem.Selected) -> None:
         """Mouse navigation."""
         self.show_section(message.section_id)
+
+    def on_pocket_dock_pressed(self, message: PocketDock.Pressed) -> None:
+        """Phone dock: previous / next section, or the full menu."""
+        if message.action == "menu":
+            self.action_menu()
+        else:
+            self.action_move(-1 if message.action == "prev" else 1)
+
+    def action_menu(self) -> None:
+        """Open the full-screen section menu (phones)."""
+        self.app.push_screen(
+            MenuScreen(self.sections, self.current, self.lore.hostname),
+            callback=self._menu_chosen,
+        )
+
+    def _menu_chosen(self, choice: str | None) -> None:
+        if not choice or choice == "action:close":
+            return
+        actions = {
+            "action:search": self.app.action_command_palette,
+            "action:matrix": self.action_matrix,
+            "action:help": self.action_help,
+            "action:quit": self.action_quit,
+        }
+        if choice in actions:
+            # wait until the menu has fully closed before opening another screen
+            self.call_after_refresh(actions[choice])
+        else:
+            self.show_section(choice)
 
     def on_fake_shell_widget_action_requested(
         self, message: FakeShellWidget.ActionRequested

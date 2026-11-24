@@ -25,11 +25,17 @@ SECTIONS: tuple[SectionSpec, ...] = (
     SectionSpec("1", "profile", "profile", "prof", "Who I am and what I'm working on now."),
     SectionSpec("2", "education", "education", "edu", "Degrees, newest first."),
     SectionSpec("3", "skills", "skills", "skl", "Tools and languages I work with."),
-    SectionSpec("4", "projects", "projects", "proj", "Enter opens a case file, f filters by tag."),
+    SectionSpec(
+        "4", "projects", "projects", "proj", "Open a case file to read it; f filters by tag."
+    ),
     SectionSpec("5", "awards", "awards", "awd", "Competition results."),
     SectionSpec("6", "experience", "experience", "exp", "Jobs and ventures, newest first."),
     SectionSpec(
-        "7", "contact", "contact", "ctc", "Email and GitHub are open. Press d to decrypt the phone."
+        "7",
+        "contact",
+        "contact",
+        "ctc",
+        "Email and GitHub are open; decrypt the phone (d or the button).",
     ),
     SectionSpec(
         "8", "terminal", "terminal", "term", "A sandboxed shell over this portfolio. Try help."

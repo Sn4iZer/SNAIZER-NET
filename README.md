@@ -95,9 +95,13 @@ Every visit opens with a boot sequence and a **fake** "neural-link" login
 - **Themes**: `neon-night` (default), `synthwave`, `toxic-green`,
   `red-alert`, plus `neon-16` for 16-color terminals (picked automatically).
 - **Matrix rain** with `m` (or `matrix` in the shell).
-- **Accessible**: works at 80x24, every animation is ≤ 12 fps, `--no-anim`
-  (or the palette) turns them all off, and below 80x24 you get a friendly
-  "enlarge" notice.
+- **Phone layout**: under 64 columns (a phone in the browser) the app switches
+  to a one-column "pocket" layout with a bottom dock (`‹ previous`, `☰ menu`,
+  `next ›`), a full-screen menu, stacked sections and tappable walkthrough
+  controls. See [Phones](#phones).
+- **Accessible**: works from 40x18 up, every animation is ≤ 12 fps,
+  `--no-anim` (or the palette) turns them all off, and below 40x18 you get a
+  friendly "enlarge" notice.
 
 **Keys:** `0-9` jump · `/` search · `↑↓`/`j k`/`Tab` move · `Enter` open
 dossier · `f`/`F` filter projects · `PgUp/PgDn` scroll · `m` rain · `?` help
@@ -143,11 +147,41 @@ reverse proxy the public `wss://` URL is worked out from
 `X-Forwarded-Proto/Host`. Set `PUBLIC_URL` to pin it.
 
 The page uses [Martian Mono](https://github.com/evilmartians/mono) (OFL,
-served locally from `servers/web_static/fonts`, no Google Fonts request). On
-small screens it picks a font size that fits the 80x24 layout; add
-`?fontsize=14` to the URL to override. The connecting and disconnected
+served locally from `servers/web_static/fonts`, no Google Fonts request). It
+picks a font size that fits the layout (at least 82 columns on a desktop);
+add `?fontsize=14` to the URL to override. The connecting and disconnected
 screens show the `ssh` command too (set `SSH_PUBLIC_PORT` if you moved the
 gateway to port 22).
+
+### Phones
+
+Phones get the same app, laid out for touch:
+
+- **Readable text**: small screens load a condensed cut of the font and aim
+  for about 44 columns (around 14 px on an iPhone) instead of squeezing in 80.
+  The app's pocket layout is designed for that width.
+- **Navigation**: a bottom dock (`‹ previous`, `☰ menu`, `next ›`) and a
+  full-screen menu replace the keyboard shortcuts; the walkthrough has
+  tappable pause/previous/next/exit controls.
+- **Scrolling**: a vertical swipe is turned into mouse-wheel events, so
+  sections scroll under your finger.
+- **Keyboard**: it only opens when the app focuses a text field (the login,
+  the terminal prompt), so tapping buttons doesn't pop it up. The app asks
+  for it through `snaizer:keyboard/on|off` messages that the page intercepts;
+  a "Tap to type" button appears as a fallback. The terminal resizes to stay
+  above the keyboard, and iOS doesn't zoom in on focus.
+- **Home screen**: "Add to Home Screen" opens it full screen, notch-safe.
+- In landscape a phone is wide enough for the normal layout.
+
+`MartianMono-Condensed.ttf` is an instance of the variable font at width 75,
+made with fontTools (same OFL license; the font has no Reserved Font Name):
+
+```bash
+pip install fonttools
+python -c "from fontTools.ttLib import TTFont; from fontTools.varLib import instancer; \
+instancer.instantiateVariableFont(TTFont('servers/web_static/fonts/MartianMono.ttf'), \
+{'wdth': 75}).save('servers/web_static/fonts/MartianMono-Condensed.ttf')"
+```
 
 ## SSH mode
 
@@ -458,7 +492,7 @@ snaizer-net/
 │   ├── widgets/           matrix_rain · glitch_label · skill_bar · typewriter
 │   │                      fake_shell · project_card · hex_stream · nav · status_bar
 │   │                      counter · sensor_panel · scanline · ledger · decrypt_text
-│   │                      classified
+│   │                      classified · dock (phone navigation)
 │   └── assets/ascii.py    block font + ASCII art
 ├── servers/               web.py · ssh_server.py · pty_bridge.py · limits.py · healthcheck.py
 │                          web_templates/ (page) · web_static/fonts/ (Martian Mono, OFL)
@@ -470,6 +504,9 @@ snaizer-net/
 ## Known limitations
 
 - The SSH gateway needs a POSIX PTY, so on Windows run it in Docker or WSL.
+- The phone layout was tested with the app at phone-sized grids and the page
+  in a desktop browser; the iOS keyboard and swipe behaviour rely on Safari
+  features (`inputmode`, `visualViewport`) and should be checked on a device.
 - `pip install .` installs the package but not `content/`. Run from the
   source tree, or point `SNAIZER_CONTENT_DIR` at your content.
 - "Matrix rain mode" is a full-screen overlay. Terminals can't layer text
